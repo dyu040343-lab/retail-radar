@@ -134,24 +134,25 @@ def fetch_from_sina():
             resp = session.get(url, timeout=8)
             if resp.status_code == 200 and resp.text.strip():
                 data = resp.json()
-                if not data or not isinstance(data, list) or len(data) == 0:
+                if not data:
                     continue
+                # 新浪返回的是 dict，不是 list
                 item = data[0] if isinstance(data, list) else data
 
-                # 新浪字段：r2=中单, r3=小单(散单)，单位：元
-                r2_net = float(item.get("r2_net", 0) or 0)
-                r3_net = float(item.get("r3_net", 0) or 0)
+                # 新浪字段：r2=中单净额, r3=小单净额，单位：元
+                # 注意：新浪字段名是 r2/r3，不是 r2_net/r3_net
+                r2_net = float(item.get("r2", 0) or item.get("r2_net", 0) or 0)
+                r3_net = float(item.get("r3", 0) or item.get("r3_net", 0) or 0)
                 retail_net = (r2_net + r3_net) / 100000000  # 转为亿元
 
                 # 主力 = 特大单(r0) + 大单(r1)
-                r0_net = float(item.get("r0_net", 0) or 0)
-                r1_net = float(item.get("r1_net", 0) or 0)
+                r0_net = float(item.get("r0", 0) or item.get("r0_net", 0) or 0)
+                r1_net = float(item.get("r1", 0) or item.get("r1_net", 0) or 0)
                 main_net = (r0_net + r1_net) / 100000000
 
-                # 获取价格
-                price_data = fetch_price_from_sina(daima, session)
-                price = price_data.get("price", 0)
-                change_pct = price_data.get("change_pct", 0)
+                # 新浪直接提供价格和涨跌幅
+                price = float(item.get("trade", 0) or 0)
+                change_pct = float(item.get("changeratio", 0) or 0) * 100  # 转为百分比
 
                 stocks.append({
                     "code": code, "name": name,
