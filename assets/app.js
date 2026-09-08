@@ -65,13 +65,19 @@
 
     // 数据状态提示
     var liveStatus = document.getElementById('liveStatus');
+    var badge = liveStatus.parentElement;
     if (data.data_status === 'live') {
-      liveStatus.textContent = '实时数据';
-      liveStatus.parentElement.style.borderColor = 'var(--accent)';
+      liveStatus.textContent = '● 实时数据';
+      badge.style.borderColor = 'var(--accent)';
+      badge.style.color = 'var(--accent)';
+    } else if (data.data_status === 'cached') {
+      liveStatus.textContent = '● 收盘数据';
+      badge.style.borderColor = 'var(--accent3)';
+      badge.style.color = 'var(--accent3)';
     } else {
-      liveStatus.textContent = '静态数据';
-      liveStatus.parentElement.style.borderColor = 'var(--accent3)';
-      liveStatus.parentElement.style.color = 'var(--accent3)';
+      liveStatus.textContent = '● 估算数据';
+      badge.style.borderColor = 'var(--danger)';
+      badge.style.color = 'var(--danger)';
     }
 
     // 资金概览

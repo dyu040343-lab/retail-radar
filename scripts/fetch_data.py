@@ -2,39 +2,57 @@
 # -*- coding: utf-8 -*-
 """
 散户雷达侦探 - 数据抓取脚本
-多数据源抓取散户资金流向和股东户数数据
+多数据源抓取 + 缓存机制：收盘后显示最近一次成功抓取的数据
 """
 
 import requests
 import json
 import time
+import os
 from datetime import datetime
 
 OUTPUT_DIR = "data"
+CACHE_FILE = f"{OUTPUT_DIR}/radar_data_cache.json"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Referer": "https://quote.eastmoney.com/",
 }
 
-SINA_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Referer": "https://finance.sina.com.cn/",
-}
+
+def load_cache():
+    """加载上一次成功抓取的缓存数据"""
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except:
+        pass
+    return None
+
+
+def save_cache(data):
+    """保存数据到缓存文件"""
+    try:
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except:
+        pass
 
 
 def fetch_retail_money_flow():
     """
     抓取散户资金流向数据
-    优先东方财富API，失败则使用备用数据
+    返回: (stocks, data_status)
+    data_status: "live"=实时, "cached"=缓存(收盘数据), "static"=备用数据
     """
     print("🔍 正在抓取散户资金流向数据...")
     stocks = []
 
-    # 尝试东方财富API
+    # 方案1：东方财富实时API
     try:
         url = "https://push2.eastmoney.com/api/qt/clist/get"
-        # 沪市
         params_sh = {
             "pn": "1", "pz": "50", "po": "1", "np": "1",
             "ut": "b2884a393a59ad64002292a3e90d46a5",
@@ -67,7 +85,6 @@ def fetch_retail_money_flow():
                             "price": round(price, 2) if isinstance(price, (int, float)) else 0,
                             "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
                             "retail_net_inflow": round(retail_net, 2),
-                            "retail_ratio": 0,
                             "small_net": round(small_net / 100000000, 2),
                             "medium_net": round(medium_net / 100000000, 2),
                             "main_net": round(main_net / 100000000, 2),
@@ -83,11 +100,20 @@ def fetch_retail_money_flow():
 
     if stocks:
         stocks.sort(key=lambda x: x["retail_net_inflow"], reverse=True)
-        print(f"  ✅ 共抓取 {len(stocks)} 只股票的散户资金数据 [实时]")
+        print(f"  ✅ 共抓取 {len(stocks)} 只股票 [实时]")
         return stocks[:50], "live"
 
-    # 备用：使用最近研究整理的数据
-    print("  📦 使用备用数据（最近交易日整理）...")
+    # 方案2：使用缓存（上一次成功抓取的数据）
+    print("  📦 API不可用，尝试使用缓存数据...")
+    cache = load_cache()
+    if cache and cache.get("retail_money_flow"):
+        cached_stocks = cache["retail_money_flow"]
+        cached_time = cache.get("last_updated", "未知时间")
+        print(f"  ✅ 使用缓存数据 {len(cached_stocks)} 条 [缓存于 {cached_time}]")
+        return cached_stocks, "cached"
+
+    # 方案3：备用数据
+    print("  📦 无缓存，使用备用数据...")
     fallback = get_fallback_money_flow()
     print(f"  ✅ 备用数据 {len(fallback)} 条 [静态]")
     return fallback, "static"
@@ -115,27 +141,27 @@ def guess_sector(name, code):
 
 
 def get_fallback_money_flow():
-    """备用散户资金流向数据（基于最近交易日公开数据整理）"""
+    """备用数据（仅在无缓存时使用）"""
     return [
-        {"code": "600150", "name": "中国船舶", "price": 0, "change_pct": 0, "retail_net_inflow": 9.12, "retail_ratio": 68.2, "small_net": 3.45, "medium_net": 5.67, "main_net": -4.27, "sector": "军工/船舶"},
-        {"code": "601318", "name": "中国平安", "price": 0, "change_pct": 0, "retail_net_inflow": 4.78, "retail_ratio": 52.1, "small_net": 2.13, "medium_net": 2.65, "main_net": -4.39, "sector": "保险"},
-        {"code": "603256", "name": "宏和科技", "price": 0, "change_pct": 0, "retail_net_inflow": 4.68, "retail_ratio": 71.3, "small_net": 1.89, "medium_net": 2.79, "main_net": -1.88, "sector": "化工"},
-        {"code": "600519", "name": "贵州茅台", "price": 0, "change_pct": 0, "retail_net_inflow": 3.89, "retail_ratio": 48.3, "small_net": 1.54, "medium_net": 2.35, "main_net": -4.18, "sector": "白酒"},
-        {"code": "002594", "name": "比亚迪", "price": 0, "change_pct": 0, "retail_net_inflow": 3.56, "retail_ratio": 51.2, "small_net": 1.42, "medium_net": 2.14, "main_net": -3.40, "sector": "新能源汽车"},
-        {"code": "000725", "name": "京东方A", "price": 0, "change_pct": 0, "retail_net_inflow": 3.34, "retail_ratio": 63.7, "small_net": 1.28, "medium_net": 2.06, "main_net": -1.90, "sector": "面板/显示"},
-        {"code": "601012", "name": "隆基绿能", "price": 0, "change_pct": 0, "retail_net_inflow": 3.12, "retail_ratio": 57.8, "small_net": 1.15, "medium_net": 1.97, "main_net": -2.28, "sector": "光伏"},
-        {"code": "300750", "name": "宁德时代", "price": 0, "change_pct": 0, "retail_net_inflow": 2.98, "retail_ratio": 49.5, "small_net": 1.08, "medium_net": 1.90, "main_net": -3.04, "sector": "电池"},
-        {"code": "600036", "name": "招商银行", "price": 0, "change_pct": 0, "retail_net_inflow": 2.87, "retail_ratio": 45.2, "small_net": 1.03, "medium_net": 1.84, "main_net": -3.48, "sector": "银行"},
-        {"code": "000858", "name": "五粮液", "price": 0, "change_pct": 0, "retail_net_inflow": 2.65, "retail_ratio": 43.8, "small_net": 0.95, "medium_net": 1.70, "main_net": -3.40, "sector": "白酒"},
-        {"code": "002475", "name": "立讯精密", "price": 0, "change_pct": 0, "retail_net_inflow": 2.43, "retail_ratio": 50.1, "small_net": 0.88, "medium_net": 1.55, "main_net": -2.42, "sector": "消费电子"},
-        {"code": "600900", "name": "长江电力", "price": 0, "change_pct": 0, "retail_net_inflow": 2.21, "retail_ratio": 47.6, "small_net": 0.82, "medium_net": 1.39, "main_net": -2.43, "sector": "电力"},
-        {"code": "601899", "name": "紫金矿业", "price": 0, "change_pct": 0, "retail_net_inflow": 2.15, "retail_ratio": 44.3, "small_net": 0.78, "medium_net": 1.37, "main_net": -2.69, "sector": "有色金属"},
-        {"code": "300059", "name": "东方财富", "price": 0, "change_pct": 0, "retail_net_inflow": 1.98, "retail_ratio": 42.1, "small_net": 0.72, "medium_net": 1.26, "main_net": -2.72, "sector": "证券"},
-        {"code": "600276", "name": "恒瑞医药", "price": 0, "change_pct": 0, "retail_net_inflow": 1.87, "retail_ratio": 46.5, "small_net": 0.68, "medium_net": 1.19, "main_net": -2.15, "sector": "医药"},
-        {"code": "000333", "name": "美的集团", "price": 0, "change_pct": 0, "retail_net_inflow": 1.76, "retail_ratio": 41.8, "small_net": 0.65, "medium_net": 1.11, "main_net": -2.45, "sector": "家电"},
-        {"code": "002230", "name": "科大讯飞", "price": 0, "change_pct": 0, "retail_net_inflow": 1.65, "retail_ratio": 48.9, "small_net": 0.61, "medium_net": 1.04, "main_net": -1.72, "sector": "AI/算力"},
-        {"code": "688981", "name": "中芯国际", "price": 0, "change_pct": 0, "retail_net_inflow": 1.54, "retail_ratio": 45.7, "small_net": 0.57, "medium_net": 0.97, "main_net": -1.83, "sector": "半导体"},
-        {"code": "601628", "name": "中国人寿", "price": 0, "change_pct": 0, "retail_net_inflow": 1.43, "retail_ratio": 40.2, "small_net": 0.53, "medium_net": 0.90, "main_net": -2.13, "sector": "保险"},
+        {"code": "600150", "name": "中国船舶", "price": 0, "change_pct": 0, "retail_net_inflow": 9.12, "small_net": 3.45, "medium_net": 5.67, "main_net": -4.27, "sector": "军工/船舶"},
+        {"code": "601318", "name": "中国平安", "price": 0, "change_pct": 0, "retail_net_inflow": 4.78, "small_net": 2.13, "medium_net": 2.65, "main_net": -4.39, "sector": "保险"},
+        {"code": "603256", "name": "宏和科技", "price": 0, "change_pct": 0, "retail_net_inflow": 4.68, "small_net": 1.89, "medium_net": 2.79, "main_net": -1.88, "sector": "化工"},
+        {"code": "600519", "name": "贵州茅台", "price": 0, "change_pct": 0, "retail_net_inflow": 3.89, "small_net": 1.54, "medium_net": 2.35, "main_net": -4.18, "sector": "白酒"},
+        {"code": "002594", "name": "比亚迪", "price": 0, "change_pct": 0, "retail_net_inflow": 3.56, "small_net": 1.42, "medium_net": 2.14, "main_net": -3.40, "sector": "新能源汽车"},
+        {"code": "000725", "name": "京东方A", "price": 0, "change_pct": 0, "retail_net_inflow": 3.34, "small_net": 1.28, "medium_net": 2.06, "main_net": -1.90, "sector": "面板/显示"},
+        {"code": "601012", "name": "隆基绿能", "price": 0, "change_pct": 0, "retail_net_inflow": 3.12, "small_net": 1.15, "medium_net": 1.97, "main_net": -2.28, "sector": "光伏"},
+        {"code": "300750", "name": "宁德时代", "price": 0, "change_pct": 0, "retail_net_inflow": 2.98, "small_net": 1.08, "medium_net": 1.90, "main_net": -3.04, "sector": "电池"},
+        {"code": "600036", "name": "招商银行", "price": 0, "change_pct": 0, "retail_net_inflow": 2.87, "small_net": 1.03, "medium_net": 1.84, "main_net": -3.48, "sector": "银行"},
+        {"code": "000858", "name": "五粮液", "price": 0, "change_pct": 0, "retail_net_inflow": 2.65, "small_net": 0.95, "medium_net": 1.70, "main_net": -3.40, "sector": "白酒"},
+        {"code": "002475", "name": "立讯精密", "price": 0, "change_pct": 0, "retail_net_inflow": 2.43, "small_net": 0.88, "medium_net": 1.55, "main_net": -2.42, "sector": "消费电子"},
+        {"code": "600900", "name": "长江电力", "price": 0, "change_pct": 0, "retail_net_inflow": 2.21, "small_net": 0.82, "medium_net": 1.39, "main_net": -2.43, "sector": "电力"},
+        {"code": "601899", "name": "紫金矿业", "price": 0, "change_pct": 0, "retail_net_inflow": 2.15, "small_net": 0.78, "medium_net": 1.37, "main_net": -2.69, "sector": "有色金属"},
+        {"code": "300059", "name": "东方财富", "price": 0, "change_pct": 0, "retail_net_inflow": 1.98, "small_net": 0.72, "medium_net": 1.26, "main_net": -2.72, "sector": "证券"},
+        {"code": "600276", "name": "恒瑞医药", "price": 0, "change_pct": 0, "retail_net_inflow": 1.87, "small_net": 0.68, "medium_net": 1.19, "main_net": -2.15, "sector": "医药"},
+        {"code": "000333", "name": "美的集团", "price": 0, "change_pct": 0, "retail_net_inflow": 1.76, "small_net": 0.65, "medium_net": 1.11, "main_net": -2.45, "sector": "家电"},
+        {"code": "002230", "name": "科大讯飞", "price": 0, "change_pct": 0, "retail_net_inflow": 1.65, "small_net": 0.61, "medium_net": 1.04, "main_net": -1.72, "sector": "AI/算力"},
+        {"code": "688981", "name": "中芯国际", "price": 0, "change_pct": 0, "retail_net_inflow": 1.54, "small_net": 0.57, "medium_net": 0.97, "main_net": -1.83, "sector": "半导体"},
+        {"code": "601628", "name": "中国人寿", "price": 0, "change_pct": 0, "retail_net_inflow": 1.43, "small_net": 0.53, "medium_net": 0.90, "main_net": -2.13, "sector": "保险"},
     ]
 
 
@@ -177,6 +203,11 @@ def main():
     shareholder_count = fetch_shareholder_count()
 
     # 3. 概览
+    status_labels = {
+        "live": "实时数据",
+        "cached": "收盘数据（缓存）",
+        "static": "备用数据（估算）",
+    }
     overview = {
         "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_retail_stocks": 0,
@@ -185,6 +216,7 @@ def main():
         "top_stock_name": "",
         "top_stock_inflow": 0,
         "data_status": data_status,
+        "data_label": status_labels.get(data_status, ""),
     }
 
     if retail_money:
@@ -198,19 +230,24 @@ def main():
         "retail_money_flow": retail_money,
         "shareholder_count": shareholder_count,
         "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "东方财富、证券之星等公开数据" if data_status == "live" else "基于最近交易日公开数据整理",
+        "data_source": "东方财富实时API" if data_status == "live" else f"缓存数据（上次成功抓取）" if data_status == "cached" else "备用数据（估算）",
         "data_status": data_status,
     }
 
-    import os
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # 只有实时数据才更新缓存
+    if data_status == "live":
+        save_cache(output)
+        print("  💾 已更新缓存")
+
     output_path = f"{OUTPUT_DIR}/radar_data.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ 数据保存成功: {output_path}")
     print(f"🕐 更新时间: {output['last_updated']}")
-    print(f"📊 散户资金数据: {len(retail_money)} 条 [{data_status}]")
+    print(f"📊 散户资金数据: {len(retail_money)} 条 [{status_labels.get(data_status, data_status)}]")
     print(f"👥 股东户数数据: {len(shareholder_count)} 条")
     print("=" * 50)
 
