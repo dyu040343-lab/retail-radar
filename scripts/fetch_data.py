@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 散户雷达侦探 - 数据抓取脚本
-多数据源抓取 + 缓存机制：收盘后显示最近一次成功抓取的数据
+多数据源：东方财富(实时) → 新浪财经(收盘可用) → 腾讯财经(收盘可用) → 缓存 → 备用数据
 """
 
 import requests
@@ -19,9 +19,33 @@ HEADERS = {
     "Referer": "https://quote.eastmoney.com/",
 }
 
+SINA_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "Referer": "http://vip.stock.finance.sina.com.cn/",
+}
+
+TENCENT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "Referer": "https://gu.qq.com/",
+}
+
+# 重点关注的股票池（按市值和活跃度筛选的活跃个股）
+WATCH_LIST = [
+    ("600150", "中国船舶", "sh"), ("601318", "中国平安", "sh"), ("603256", "宏和科技", "sh"),
+    ("600519", "贵州茅台", "sh"), ("002594", "比亚迪", "sz"), ("000725", "京东方A", "sz"),
+    ("601012", "隆基绿能", "sh"), ("300750", "宁德时代", "sz"), ("600036", "招商银行", "sh"),
+    ("000858", "五粮液", "sz"), ("002475", "立讯精密", "sz"), ("600900", "长江电力", "sh"),
+    ("601899", "紫金矿业", "sh"), ("300059", "东方财富", "sz"), ("600276", "恒瑞医药", "sh"),
+    ("000333", "美的集团", "sz"), ("002230", "科大讯飞", "sz"), ("688981", "中芯国际", "sh"),
+    ("601628", "中国人寿", "sh"), ("000977", "浪潮信息", "sz"),
+    ("600584", "长电科技", "sh"), ("600522", "中天科技", "sh"), ("300308", "中际旭创", "sz"),
+    ("300476", "胜宏科技", "sz"), ("603986", "兆易创新", "sh"), ("600707", "彩虹股份", "sh"),
+    ("002415", "海康威视", "sz"), ("000063", "中兴通讯", "sz"), ("600809", "山西汾酒", "sh"),
+    ("000021", "深科技", "sz"),
+]
+
 
 def load_cache():
-    """加载上一次成功抓取的缓存数据"""
     try:
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
@@ -32,7 +56,6 @@ def load_cache():
 
 
 def save_cache(data):
-    """保存数据到缓存文件"""
     try:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
@@ -41,25 +64,18 @@ def save_cache(data):
         pass
 
 
-def fetch_retail_money_flow():
-    """
-    抓取散户资金流向数据
-    返回: (stocks, data_status)
-    data_status: "live"=实时, "cached"=缓存(收盘数据), "static"=备用数据
-    """
-    print("🔍 正在抓取散户资金流向数据...")
+def fetch_from_eastmoney():
+    """东方财富实时API - 交易时间内可用"""
+    print("🔍 [数据源1] 东方财富API...")
     stocks = []
-
-    # 方案1：东方财富实时API
     try:
         url = "https://push2.eastmoney.com/api/qt/clist/get"
-        # fid=f84 按小单净额排序（散户资金），po=1 降序（最大净流入在前）
         params_sh = {
             "pn": "1", "pz": "50", "po": "1", "np": "1",
             "ut": "b2884a393a59ad64002292a3e90d46a5",
             "fltt": "2", "invt": "2", "fid": "f84",
             "fs": "m:1+t:2,m:1+t:23",
-            "fields": "f2,f3,f12,f14,f62,f66,f69,f72,f75,f78,f81,f84,f87,f184",
+            "fields": "f2,f3,f12,f14,f62,f84,f78",
             "_": str(int(time.time() * 1000))
         }
         params_sz = params_sh.copy()
@@ -81,8 +97,7 @@ def fetch_retail_money_flow():
                         retail_net = (small_net + medium_net) / 100000000
                         main_net = item.get("f62", 0) or 0
                         stocks.append({
-                            "code": code,
-                            "name": name,
+                            "code": code, "name": name,
                             "price": round(price, 2) if isinstance(price, (int, float)) else 0,
                             "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
                             "retail_net_inflow": round(retail_net, 2),
@@ -93,30 +108,190 @@ def fetch_retail_money_flow():
                         })
                     print(f"  ✅ {market}: {len(diff)} 条")
                 else:
-                    print(f"  ⚠️ {market}: API返回空 (status={resp.status_code})")
+                    print(f"  ⚠️ {market}: status={resp.status_code}")
             except Exception as e:
-                print(f"  ⚠️ {market}数据抓取失败: {e}")
+                print(f"  ⚠️ {market}失败: {e}")
     except Exception as e:
-        print(f"  ⚠️ 东方财富API不可用: {e}")
+        print(f"  ⚠️ 东方财富不可用: {e}")
 
     if stocks:
         stocks.sort(key=lambda x: x["retail_net_inflow"], reverse=True)
-        print(f"  ✅ 共抓取 {len(stocks)} 只股票 [实时]")
-        return stocks[:50], "live"
+        print(f"  ✅ 东方财富共 {len(stocks)} 条 [实时]")
+    return stocks[:50] if stocks else []
 
-    # 方案2：使用缓存（上一次成功抓取的数据）
-    print("  📦 API不可用，尝试使用缓存数据...")
+
+def fetch_from_sina():
+    """新浪财经API - 收盘后也可获取当日数据"""
+    print("🔍 [数据源2] 新浪财经API...")
+    stocks = []
+    session = requests.Session()
+    session.headers.update(SINA_HEADERS)
+
+    for code, name, market in WATCH_LIST:
+        try:
+            daima = f"{market}{code}"
+            url = f"http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssi_ssfx_flzjtj?format=json&daima={daima}"
+            resp = session.get(url, timeout=8)
+            if resp.status_code == 200 and resp.text.strip():
+                data = resp.json()
+                if not data or not isinstance(data, list) or len(data) == 0:
+                    continue
+                item = data[0] if isinstance(data, list) else data
+
+                # 新浪字段：r2=中单, r3=小单(散单)，单位：元
+                r2_net = float(item.get("r2_net", 0) or 0)
+                r3_net = float(item.get("r3_net", 0) or 0)
+                retail_net = (r2_net + r3_net) / 100000000  # 转为亿元
+
+                # 主力 = 特大单(r0) + 大单(r1)
+                r0_net = float(item.get("r0_net", 0) or 0)
+                r1_net = float(item.get("r1_net", 0) or 0)
+                main_net = (r0_net + r1_net) / 100000000
+
+                # 获取价格
+                price_data = fetch_price_from_sina(daima, session)
+                price = price_data.get("price", 0)
+                change_pct = price_data.get("change_pct", 0)
+
+                stocks.append({
+                    "code": code, "name": name,
+                    "price": round(price, 2) if price else 0,
+                    "change_pct": round(change_pct, 2) if change_pct else 0,
+                    "retail_net_inflow": round(retail_net, 2),
+                    "small_net": round(r3_net / 100000000, 2),
+                    "medium_net": round(r2_net / 100000000, 2),
+                    "main_net": round(main_net, 2),
+                    "sector": guess_sector(name, code),
+                })
+        except Exception as e:
+            pass
+
+        time.sleep(0.1)  # 避免请求过快
+
+    if stocks:
+        stocks.sort(key=lambda x: x["retail_net_inflow"], reverse=True)
+        print(f"  ✅ 新浪共 {len(stocks)} 条 [收盘/实时]")
+    return stocks
+
+
+def fetch_price_from_sina(daima, session):
+    """从新浪获取实时价格"""
+    try:
+        url = f"http://hq.sinajs.cn/list={daima}"
+        resp = session.get(url, timeout=5)
+        if resp.status_code == 200:
+            text = resp.content.decode("gbk", errors="ignore")
+            parts = text.split('"')[1].split(",")
+            if len(parts) > 3:
+                price = float(parts[3])
+                pre_close = float(parts[2])
+                change_pct = ((price - pre_close) / pre_close * 100) if pre_close else 0
+                return {"price": price, "change_pct": change_pct}
+    except:
+        pass
+    return {}
+
+
+def fetch_from_tencent():
+    """腾讯财经API - 收盘后也可获取"""
+    print("🔍 [数据源3] 腾讯财经API...")
+    stocks = []
+    session = requests.Session()
+    session.headers.update(TENCENT_HEADERS)
+
+    for code, name, market in WATCH_LIST:
+        try:
+            tc_code = f"{market}{code}"
+            url = f"http://qt.gtimg.cn/q=ff_{tc_code}"
+            resp = session.get(url, timeout=8)
+            if resp.status_code == 200:
+                text = resp.content.decode("gbk", errors="ignore")
+                start = text.find('"') + 1
+                end = text.rfind('"')
+                if start < end:
+                    fields = text[start:end].split("~")
+                    if len(fields) > 8:
+                        # 索引3=主力净流入, 7=散户净流入 (单位：万元)
+                        main_net = float(fields[3] or 0) / 10000  # 转为亿元
+                        retail_net = float(fields[7] or 0) / 10000
+
+                        # 获取价格
+                        price_info = fetch_price_from_tencent(tc_code, session)
+
+                        stocks.append({
+                            "code": code, "name": name,
+                            "price": round(price_info.get("price", 0), 2),
+                            "change_pct": round(price_info.get("change_pct", 0), 2),
+                            "retail_net_inflow": round(retail_net, 2),
+                            "small_net": 0,
+                            "medium_net": round(retail_net, 2),
+                            "main_net": round(main_net, 2),
+                            "sector": guess_sector(name, code),
+                        })
+        except:
+            pass
+        time.sleep(0.1)
+
+    if stocks:
+        stocks.sort(key=lambda x: x["retail_net_inflow"], reverse=True)
+        print(f"  ✅ 腾讯共 {len(stocks)} 条 [收盘/实时]")
+    return stocks
+
+
+def fetch_price_from_tencent(tc_code, session):
+    """从腾讯获取价格"""
+    try:
+        url = f"http://qt.gtimg.cn/q={tc_code}"
+        resp = session.get(url, timeout=5)
+        if resp.status_code == 200:
+            text = resp.content.decode("gbk", errors="ignore")
+            start = text.find('"') + 1
+            end = text.rfind('"')
+            if start < end:
+                fields = text[start:end].split("~")
+                if len(fields) > 5:
+                    price = float(fields[3] or 0)
+                    pre_close = float(fields[4] or 0)
+                    change_pct = ((price - pre_close) / pre_close * 100) if pre_close else 0
+                    return {"price": price, "change_pct": change_pct}
+    except:
+        pass
+    return {}
+
+
+def fetch_retail_money_flow():
+    """依次尝试多个数据源"""
+    print("=" * 50)
+    print("📡 散户雷达侦探 - 数据抓取中...")
+    print("=" * 50)
+
+    # 方案1: 东方财富（交易时间）
+    stocks = fetch_from_eastmoney()
+    if stocks:
+        return stocks, "live"
+
+    # 方案2: 新浪财经（收盘后可用）
+    stocks = fetch_from_sina()
+    if stocks:
+        return stocks, "live"
+
+    # 方案3: 腾讯财经（收盘后可用）
+    stocks = fetch_from_tencent()
+    if stocks:
+        return stocks, "live"
+
+    # 方案4: 缓存
+    print("📦 所有API不可用，尝试缓存...")
     cache = load_cache()
     if cache and cache.get("retail_money_flow"):
-        cached_stocks = cache["retail_money_flow"]
-        cached_time = cache.get("last_updated", "未知时间")
-        print(f"  ✅ 使用缓存数据 {len(cached_stocks)} 条 [缓存于 {cached_time}]")
-        return cached_stocks, "cached"
+        cached = cache["retail_money_flow"]
+        print(f"  ✅ 缓存 {len(cached)} 条 [缓存于 {cache.get('last_updated')}]")
+        return cached, "cached"
 
-    # 方案3：备用数据
-    print("  📦 无缓存，使用备用数据...")
+    # 方案5: 备用数据
+    print("📦 使用备用数据...")
     fallback = get_fallback_money_flow()
-    print(f"  ✅ 备用数据 {len(fallback)} 条 [静态]")
+    print(f"  ✅ 备用 {len(fallback)} 条 [静态]")
     return fallback, "static"
 
 
@@ -142,7 +317,6 @@ def guess_sector(name, code):
 
 
 def get_fallback_money_flow():
-    """备用数据（仅在无缓存时使用）"""
     return [
         {"code": "600150", "name": "中国船舶", "price": 0, "change_pct": 0, "retail_net_inflow": 9.12, "small_net": 3.45, "medium_net": 5.67, "main_net": -4.27, "sector": "军工/船舶"},
         {"code": "601318", "name": "中国平安", "price": 0, "change_pct": 0, "retail_net_inflow": 4.78, "small_net": 2.13, "medium_net": 2.65, "main_net": -4.39, "sector": "保险"},
@@ -167,9 +341,7 @@ def get_fallback_money_flow():
 
 
 def fetch_shareholder_count():
-    """股东户数变化数据"""
-    print("🔍 正在抓取股东户数变化数据...")
-
+    print("🔍 正在加载股东户数变化数据...")
     known_stocks = [
         {"code": "000725", "name": "京东方A", "current": 1897600, "previous": 971900, "increase": 925600, "change_pct": 95.23, "period": "2026Q2", "sector": "面板/显示"},
         {"code": "600522", "name": "中天科技", "current": 818100, "previous": 226200, "increase": 591900, "change_pct": 261.64, "period": "2026Q2", "sector": "光纤/光通信"},
@@ -186,29 +358,16 @@ def fetch_shareholder_count():
         {"code": "002594", "name": "比亚迪", "current": 755000, "previous": 718600, "increase": 36400, "change_pct": 5.06, "period": "2026Q2", "sector": "新能源汽车"},
         {"code": "000977", "name": "浪潮信息", "current": 245000, "previous": 198000, "increase": 47000, "change_pct": 23.74, "period": "2026Q2", "sector": "算力服务器"},
     ]
-
     known_stocks.sort(key=lambda x: x["change_pct"], reverse=True)
-    print(f"  ✅ 共整理 {len(known_stocks)} 只股票的股东户数数据")
+    print(f"  ✅ 共 {len(known_stocks)} 条")
     return known_stocks
 
 
 def main():
-    print("=" * 50)
-    print("📡 散户雷达侦探 - 数据抓取中...")
-    print("=" * 50)
-
-    # 1. 散户资金流向
     retail_money, data_status = fetch_retail_money_flow()
-
-    # 2. 股东户数变化
     shareholder_count = fetch_shareholder_count()
 
-    # 3. 概览
-    status_labels = {
-        "live": "实时数据",
-        "cached": "收盘数据（缓存）",
-        "static": "备用数据（估算）",
-    }
+    status_labels = {"live": "实时数据", "cached": "收盘数据（缓存）", "static": "估算数据"}
     overview = {
         "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_retail_stocks": 0,
@@ -231,13 +390,11 @@ def main():
         "retail_money_flow": retail_money,
         "shareholder_count": shareholder_count,
         "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "东方财富实时API" if data_status == "live" else f"缓存数据（上次成功抓取）" if data_status == "cached" else "备用数据（估算）",
+        "data_source": "东方财富/新浪财经/腾讯财经" if data_status == "live" else ("缓存数据" if data_status == "cached" else "估算数据"),
         "data_status": data_status,
     }
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    # 只有实时数据才更新缓存
     if data_status == "live":
         save_cache(output)
         print("  💾 已更新缓存")
@@ -248,8 +405,8 @@ def main():
 
     print(f"\n✅ 数据保存成功: {output_path}")
     print(f"🕐 更新时间: {output['last_updated']}")
-    print(f"📊 散户资金数据: {len(retail_money)} 条 [{status_labels.get(data_status, data_status)}]")
-    print(f"👥 股东户数数据: {len(shareholder_count)} 条")
+    print(f"📊 散户资金: {len(retail_money)} 条 [{status_labels.get(data_status, data_status)}]")
+    print(f"👥 股东户数: {len(shareholder_count)} 条")
     print("=" * 50)
 
 
