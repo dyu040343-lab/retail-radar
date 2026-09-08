@@ -63,6 +63,17 @@
     // 更新时间
     document.getElementById('updateTime').textContent = '更新时间: ' + (data.last_updated || '--');
 
+    // 数据状态提示
+    var liveStatus = document.getElementById('liveStatus');
+    if (data.data_status === 'live') {
+      liveStatus.textContent = '实时数据';
+      liveStatus.parentElement.style.borderColor = 'var(--accent)';
+    } else {
+      liveStatus.textContent = '静态数据';
+      liveStatus.parentElement.style.borderColor = 'var(--accent3)';
+      liveStatus.parentElement.style.color = 'var(--accent3)';
+    }
+
     // 资金概览
     if (retail.length > 0) {
       var top = retail[0];
