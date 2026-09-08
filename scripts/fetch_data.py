@@ -53,10 +53,11 @@ def fetch_retail_money_flow():
     # 方案1：东方财富实时API
     try:
         url = "https://push2.eastmoney.com/api/qt/clist/get"
+        # fid=f84 按小单净额排序（散户资金），po=1 降序（最大净流入在前）
         params_sh = {
             "pn": "1", "pz": "50", "po": "1", "np": "1",
             "ut": "b2884a393a59ad64002292a3e90d46a5",
-            "fltt": "2", "invt": "2", "fid": "f62",
+            "fltt": "2", "invt": "2", "fid": "f84",
             "fs": "m:1+t:2,m:1+t:23",
             "fields": "f2,f3,f12,f14,f62,f66,f69,f72,f75,f78,f81,f84,f87,f184",
             "_": str(int(time.time() * 1000))
