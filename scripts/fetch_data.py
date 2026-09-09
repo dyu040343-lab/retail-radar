@@ -220,7 +220,7 @@ def fetch_from_sina():
 
 def fetch_retail_money_flow():
     print("=" * 50)
-    print("📡 散户雷达侦探 v2 - 数据抓取中...")
+    print("📡 小散研究院 - 数据抓取中...")
     print("=" * 50)
 
     stocks = fetch_from_eastmoney()
