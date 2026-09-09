@@ -63,6 +63,24 @@ body {
 }
 .toggle-switch.on::after { transform: translateX(18px); }
 
+/* Section headers */
+.section-header {
+  display: flex; align-items: center; gap: 8px; margin: 20px 0 12px;
+}
+.section-header h2 { font-size: 15px; font-weight: 700; }
+.freq-tag {
+  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.freq-tag.realtime { background: rgba(34,197,94,0.15); color: var(--green); }
+.freq-tag.quarterly { background: rgba(245,158,11,0.15); color: var(--yellow); }
+.freq-tag-dot { width: 5px; height: 5px; border-radius: 50%; }
+.freq-tag.realtime .freq-tag-dot { background: var(--green); animation: blink 1.5s infinite; }
+.freq-tag.quarterly .freq-tag-dot { background: var(--yellow); }
+.section-divider {
+  height: 1px; background: var(--border); margin: 24px 0;
+}
+
 /* KPI Cards - 4列 */
 .kpi-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
@@ -77,7 +95,7 @@ body {
 .kpi-card.outflow::before { background: var(--red); }
 .kpi-card.net::before { background: var(--accent); }
 .kpi-card.ratio::before { background: var(--purple); }
-.kpi-label { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+.kpi-label { font-size: 12px; color: var(--dim); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
 .kpi-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .kpi-card.inflow .kpi-value { color: var(--green); }
 .kpi-card.outflow .kpi-value { color: var(--red); }
@@ -183,25 +201,31 @@ tr:hover { background: rgba(255,255,255,0.03); }
     </div>
   </div>
 
+  <!-- ═══════ 实时数据区 ═══════ -->
+  <div class="section-header">
+    <h2>📊 散户资金实时监控</h2>
+    <span class="freq-tag realtime"><span class="freq-tag-dot"></span>实时 · 每10分钟更新</span>
+  </div>
+
   <!-- 四维KPI -->
   <div class="kpi-grid">
     <div class="kpi-card inflow">
-      <div class="kpi-label">💰 散户流入资金</div>
+      <div class="kpi-label"><span>💰 散户流入资金</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
       <div class="kpi-value" id="kpiInflowAmount">--</div>
       <div class="kpi-sub">流入个股 <span class="num" id="kpiInflowCount">--</span> 只</div>
     </div>
     <div class="kpi-card outflow">
-      <div class="kpi-label">💸 散户流出资金</div>
+      <div class="kpi-label"><span>💸 散户流出资金</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
       <div class="kpi-value" id="kpiOutflowAmount">--</div>
       <div class="kpi-sub">流出个股 <span class="num" id="kpiOutflowCount">--</span> 只</div>
     </div>
     <div class="kpi-card net">
-      <div class="kpi-label">⚖️ 散户净流入</div>
+      <div class="kpi-label"><span>⚖️ 散户净流入</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
       <div class="kpi-value" id="kpiNetAmount">--</div>
       <div class="kpi-sub">净流入个股 <span class="num" id="kpiNetCount">--</span> 只</div>
     </div>
     <div class="kpi-card ratio">
-      <div class="kpi-label">🎯 散户/主力资金比</div>
+      <div class="kpi-label"><span>🎯 散户/主力资金比</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
       <div class="kpi-value" id="kpiRatio">--</div>
       <div class="kpi-sub">散户占比 <span class="num" id="kpiRatioNum">--</span>%</div>
       <div class="ratio-bar">
@@ -237,9 +261,17 @@ tr:hover { background: rgba(255,255,255,0.03); }
     </div>
   </div>
 
+  <div class="section-divider"></div>
+
+  <!-- ═══════ 季度数据区 ═══════ -->
+  <div class="section-header">
+    <h2>👥 股东户数变化</h2>
+    <span class="freq-tag quarterly"><span class="freq-tag-dot"></span>季度披露 · 来源于上市公司定期公告</span>
+  </div>
+
   <!-- 股东户数 -->
   <div class="shareholder-section">
-    <h3>👥 股东户数变化（定期披露）</h3>
+    <h3 style="display:none">户数变化</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
         <h4 style="font-size:12px;color:var(--dim);margin-bottom:8px;">户数增幅 TOP</h4>
