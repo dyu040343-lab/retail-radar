@@ -87,7 +87,7 @@ def guess_sector(name, code):
 
 
 def fetch_from_eastmoney():
-    """东方财富实时API - 交易时间内可用"""
+    """东方财富实时API - 交易时间内可用，仅用可靠的净额字段"""
     print("🔍 [数据源1] 东方财富API...")
     stocks = []
     try:
@@ -97,7 +97,7 @@ def fetch_from_eastmoney():
             "ut": "b2884a393a59ad64002292a3e90d46a5",
             "fltt": "2", "invt": "2", "fid": "f84",
             "fs": "m:1+t:2,m:1+t:23",
-            "fields": "f2,f3,f12,f14,f62,f84,f78,f136,f137,f138,f139,f267,f268,f269,f270",
+            "fields": "f2,f3,f12,f14,f62,f84,f78",
             "_": str(int(time.time() * 1000))
         }
         params_sz = params_sh.copy()
@@ -118,22 +118,12 @@ def fetch_from_eastmoney():
                         medium_net = item.get("f78", 0) or 0
                         retail_net = (small_net + medium_net) / 100000000
                         main_net = item.get("f62", 0) or 0
-
-                        # 尝试获取流入流出额（字段可能不存在，做容错）
-                        small_in = item.get("f267", 0) or item.get("f136", 0) or 0
-                        small_out = item.get("f268", 0) or item.get("f137", 0) or 0
-                        medium_in = item.get("f269", 0) or item.get("f138", 0) or 0
-                        medium_out = item.get("f270", 0) or item.get("f139", 0) or 0
-
-                        if small_in or small_out or medium_in or medium_out:
-                            retail_inflow = (small_in + medium_in) / 100000000
-                            retail_outflow = (small_out + medium_out) / 100000000
-                        else:
-                            # 无法获取明细，从净额估算
-                            retail_inflow = max(retail_net, 0)
-                            retail_outflow = max(-retail_net, 0)
-
                         main_net_yi = round(main_net / 100000000, 2)
+
+                        # 东方财富只有净额数据，流入/流出从净额推算
+                        retail_inflow = max(retail_net, 0)
+                        retail_outflow = max(-retail_net, 0)
+
                         total_abs = abs(retail_net) + abs(main_net_yi)
                         retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
                         retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
@@ -148,6 +138,7 @@ def fetch_from_eastmoney():
                             "retail_ratio": retail_ratio,
                             "retail_share": retail_share,
                             "sector": guess_sector(name, code),
+                            "source": "eastmoney",
                         })
                     print(f"  ✅ {market}: {len(diff)} 条")
                 else:
@@ -180,19 +171,24 @@ def fetch_from_sina():
                     continue
                 item = data[0] if isinstance(data, list) else data
 
-                # 新浪字段：r2_in/r2_out=中单流入流出, r3_in/r3_out=小单流入流出，单位：元
+                # 新浪字段：r0=超大单, r1=大单, r2=中单, r3=小单
+                # rX_in=流入, rX_out=流出, rX=总额(流入+流出)，单位：元
+                r0_in = float(item.get("r0_in", 0) or 0)
+                r0_out = float(item.get("r0_out", 0) or 0)
+                r1_in = float(item.get("r1_in", 0) or 0)
+                r1_out = float(item.get("r1_out", 0) or 0)
                 r2_in = float(item.get("r2_in", 0) or 0)
                 r2_out = float(item.get("r2_out", 0) or 0)
                 r3_in = float(item.get("r3_in", 0) or 0)
                 r3_out = float(item.get("r3_out", 0) or 0)
 
+                # 散户 = 中单 + 小单
                 retail_inflow = (r2_in + r3_in) / 100000000
                 retail_outflow = (r2_out + r3_out) / 100000000
                 retail_net = retail_inflow - retail_outflow
 
-                r0_net = float(item.get("r0", 0) or 0)
-                r1_net = float(item.get("r1", 0) or 0)
-                main_net = (r0_net + r1_net) / 100000000
+                # 主力 = 超大单 + 大单（净额 = 流入 - 流出）
+                main_net = ((r0_in - r0_out) + (r1_in - r1_out)) / 100000000
 
                 price = float(item.get("trade", 0) or 0)
                 change_pct = float(item.get("changeratio", 0) or 0) * 100
@@ -211,6 +207,7 @@ def fetch_from_sina():
                     "retail_ratio": retail_ratio,
                     "retail_share": retail_share,
                     "sector": guess_sector(name, code),
+                    "source": "sina",
                 })
         except:
             pass
