@@ -221,8 +221,6 @@ tr:hover { background: rgba(255,255,255,0.03); }
     <div class="subtab active" onclick="switchSub('inflow')">流入TOP</div>
     <div class="subtab" onclick="switchSub('outflow')">流出TOP</div>
     <div class="subtab" onclick="switchSub('net')">净流入TOP</div>
-    <div class="subtab" onclick="switchSub('ratio_dominant')">散户主导TOP</div>
-    <div class="subtab" onclick="switchSub('main_dominant')">主力主导TOP</div>
   </div>
 
   <!-- 数据内容 -->
@@ -427,10 +425,31 @@ function renderShareholders() {
   document.getElementById('holderDecreaseBody').innerHTML = html;
 }
 
+const TAB_SUBTABS = {
+  flow: [
+    {key: 'inflow', label: '流入TOP'},
+    {key: 'outflow', label: '流出TOP'},
+    {key: 'net', label: '净流入TOP'},
+  ],
+  ratio: [
+    {key: 'ratio_dominant', label: '散户主导TOP'},
+    {key: 'main_dominant', label: '主力主导TOP'},
+  ],
+};
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
+
+  var subs = TAB_SUBTABS[tab] || [];
+  var subHtml = '';
+  subs.forEach(function(s, i) {
+    subHtml += '<div class="subtab' + (i === 0 ? ' active' : '') + '" onclick="switchSub(\'' + s.key + '\')">' + s.label + '</div>';
+  });
+  document.getElementById('subtabBar').innerHTML = subHtml;
+
+  currentSub = subs.length > 0 ? subs[0].key : 'inflow';
   renderFlow();
 }
 
