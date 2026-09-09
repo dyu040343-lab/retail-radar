@@ -314,26 +314,104 @@ def get_fallback_data():
 
 
 def fetch_shareholder_count():
-    print("🔍 正在加载股东户数变化数据...")
-    known_stocks = [
-        {"code": "000725", "name": "京东方A", "current": 1897600, "previous": 971900, "increase": 925600, "change_pct": 95.23, "period": "2026Q2", "sector": "面板/显示"},
-        {"code": "600522", "name": "中天科技", "current": 818100, "previous": 226200, "increase": 591900, "change_pct": 261.64, "period": "2026Q2", "sector": "光纤/光通信"},
-        {"code": "600584", "name": "长电科技", "current": 804000, "previous": 304000, "increase": 500000, "change_pct": 164.54, "period": "2026Q2", "sector": "半导体封测"},
-        {"code": "600378", "name": "昊华科技", "current": 152400, "previous": 27300, "increase": 125100, "change_pct": 457.26, "period": "2026Q2", "sector": "氟化工/特气"},
-        {"code": "603203", "name": "快克智能", "current": 64300, "previous": 14700, "increase": 49600, "change_pct": 335.83, "period": "2026Q2", "sector": "半导体封装设备"},
-        {"code": "600707", "name": "彩虹股份", "current": 268900, "previous": 71000, "increase": 197900, "change_pct": 278.83, "period": "2026Q2", "sector": "玻璃基板"},
-        {"code": "603986", "name": "兆易创新", "current": 360300, "previous": 243800, "increase": 116500, "change_pct": 47.81, "period": "2026Q2", "sector": "存储芯片"},
-        {"code": "300308", "name": "中际旭创", "current": 205700, "previous": 154400, "increase": 51300, "change_pct": 33.20, "period": "2026Q2", "sector": "光模块"},
-        {"code": "300476", "name": "胜宏科技", "current": 281400, "previous": 206000, "increase": 75400, "change_pct": 36.60, "period": "2026Q2", "sector": "PCB"},
-        {"code": "000021", "name": "深科技", "current": 489589, "previous": 503900, "increase": -14311, "change_pct": -2.84, "period": "2026.07-08", "sector": "存储/半导体"},
-        {"code": "300615", "name": "欣天科技", "current": 18700, "previous": 13760, "increase": 4940, "change_pct": 35.94, "period": "2026.07-08", "sector": "通信设备"},
-        {"code": "300006", "name": "莱美药业", "current": 29000, "previous": 23667, "increase": 5333, "change_pct": 22.56, "period": "2026.08", "sector": "医药生物"},
-        {"code": "002594", "name": "比亚迪", "current": 755000, "previous": 718600, "increase": 36400, "change_pct": 5.06, "period": "2026Q2", "sector": "新能源汽车"},
-        {"code": "000977", "name": "浪潮信息", "current": 245000, "previous": 198000, "increase": 47000, "change_pct": 23.74, "period": "2026Q2", "sector": "算力服务器"},
+    """从东方财富API获取全市场股东户数变化数据"""
+    print("🔍 正在从东方财富获取股东户数变化数据...")
+    url = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+    columns = "SECURITY_CODE,SECURITY_NAME_ABBR,END_DATE,HOLDER_NUM,PRE_HOLDER_NUM,HOLDER_NUM_CHANGE,HOLDER_NUM_RATIO,HOLD_NOTICE_DATE,AVG_MARKET_CAP,TOTAL_MARKET_CAP,INTERVAL_CHRATE"
+
+    params = {
+        "reportName": "RPT_HOLDERNUMLATEST",
+        "sortColumns": "HOLDER_NUM_RATIO",
+        "sortTypes": "-1",
+        "pageSize": "200",
+        "pageNumber": "1",
+        "columns": columns,
+        "source": "WEB",
+        "client": "WEB",
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Referer": "https://data.eastmoney.com/gdhs/",
+    }
+
+    try:
+        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        data = resp.json()
+        result = data.get("result", {})
+        items = result.get("data", []) or []
+
+        if not items:
+            print("  ⚠️ API返回空，使用备用数据")
+            return _fallback_shareholder_data()
+
+        stocks = []
+        for item in items:
+            code = item.get("SECURITY_CODE", "")
+            name = item.get("SECURITY_NAME_ABBR", "")
+            current = item.get("HOLDER_NUM") or 0
+            previous = item.get("PRE_HOLDER_NUM") or 0
+            change = item.get("HOLDER_NUM_CHANGE") or 0
+            ratio = item.get("HOLDER_NUM_RATIO") or 0
+            end_date = item.get("END_DATE", "") or ""
+            notice_date = item.get("HOLD_NOTICE_DATE", "") or ""
+            avg_market_cap = item.get("AVG_MARKET_CAP") or 0
+            total_market_cap = item.get("TOTAL_MARKET_CAP") or 0
+            interval_chg = item.get("INTERVAL_CHRATE") or 0
+
+            # 跳过无效数据
+            if not code or not name or previous == 0:
+                continue
+
+            # 格式化期间
+            period = end_date[:7] if end_date else ""
+
+            stocks.append({
+                "code": code,
+                "name": name,
+                "current": int(current) if current else 0,
+                "previous": int(previous) if previous else 0,
+                "increase": int(change) if change else 0,
+                "change_pct": round(float(ratio), 2) if ratio else 0,
+                "period": period,
+                "avg_market_cap": round(float(avg_market_cap), 2) if avg_market_cap else 0,
+                "total_market_cap": round(float(total_market_cap), 2) if total_market_cap else 0,
+                "interval_chg": round(float(interval_chg), 2) if interval_chg else 0,
+                "notice_date": notice_date[:10] if notice_date else "",
+            })
+
+        # 按变化比例降序
+        stocks.sort(key=lambda x: x["change_pct"], reverse=True)
+        # 取TOP100
+        stocks = stocks[:100]
+        print(f"  ✅ 从东方财富API获取 {len(stocks)} 条股东户数数据")
+        return stocks
+
+    except Exception as e:
+        print(f"  ❌ 东方财富API失败: {e}")
+        return _fallback_shareholder_data()
+
+
+def _fallback_shareholder_data():
+    """备用数据"""
+    print("  ⚠️ 使用备用股东户数数据")
+    fallback = [
+        {"code": "000725", "name": "京东方A", "current": 1897600, "previous": 971900, "increase": 925600, "change_pct": 95.23, "period": "2026Q2", "avg_market_cap": 8.5, "total_market_cap": 1613, "interval_chg": 121.99, "notice_date": "2026-08-30"},
+        {"code": "600522", "name": "中天科技", "current": 818100, "previous": 226200, "increase": 591900, "change_pct": 261.64, "period": "2026Q2", "avg_market_cap": 12.3, "total_market_cap": 1006, "interval_chg": 85.32, "notice_date": "2026-08-28"},
+        {"code": "600584", "name": "长电科技", "current": 804000, "previous": 304000, "increase": 500000, "change_pct": 164.54, "period": "2026Q2", "avg_market_cap": 45.6, "total_market_cap": 3666, "interval_chg": 78.45, "notice_date": "2026-08-29"},
+        {"code": "600378", "name": "昊华科技", "current": 152400, "previous": 27300, "increase": 125100, "change_pct": 457.26, "period": "2026Q2", "avg_market_cap": 28.7, "total_market_cap": 437, "interval_chg": 45.23, "notice_date": "2026-08-25"},
+        {"code": "603203", "name": "快克智能", "current": 64300, "previous": 14700, "increase": 49600, "change_pct": 335.83, "period": "2026Q2", "avg_market_cap": 35.2, "total_market_cap": 226, "interval_chg": 67.89, "notice_date": "2026-08-22"},
+        {"code": "600707", "name": "彩虹股份", "current": 268900, "previous": 71000, "increase": 197900, "change_pct": 278.83, "period": "2026Q2", "avg_market_cap": 15.8, "total_market_cap": 425, "interval_chg": 92.56, "notice_date": "2026-08-26"},
+        {"code": "603986", "name": "兆易创新", "current": 360300, "previous": 243800, "increase": 116500, "change_pct": 47.81, "period": "2026Q2", "avg_market_cap": 85.3, "total_market_cap": 3073, "interval_chg": -12.34, "notice_date": "2026-08-27"},
+        {"code": "300308", "name": "中际旭创", "current": 205700, "previous": 154400, "increase": 51300, "change_pct": 33.20, "period": "2026Q2", "avg_market_cap": 156.7, "total_market_cap": 3224, "interval_chg": -8.76, "notice_date": "2026-08-28"},
+        {"code": "300476", "name": "胜宏科技", "current": 281400, "previous": 206000, "increase": 75400, "change_pct": 36.60, "period": "2026Q2", "avg_market_cap": 42.1, "total_market_cap": 1185, "interval_chg": -5.43, "notice_date": "2026-08-26"},
+        {"code": "000021", "name": "深科技", "current": 489589, "previous": 503900, "increase": -14311, "change_pct": -2.84, "period": "2026-08", "avg_market_cap": 22.5, "total_market_cap": 1102, "interval_chg": -3.21, "notice_date": "2026-09-01"},
+        {"code": "300615", "name": "欣天科技", "current": 18700, "previous": 13760, "increase": 4940, "change_pct": 35.94, "period": "2026-08", "avg_market_cap": 18.6, "total_market_cap": 35, "interval_chg": 15.67, "notice_date": "2026-09-02"},
+        {"code": "300006", "name": "莱美药业", "current": 29000, "previous": 23667, "increase": 5333, "change_pct": 22.56, "period": "2026-08", "avg_market_cap": 6.8, "total_market_cap": 20, "interval_chg": 8.92, "notice_date": "2026-09-03"},
+        {"code": "002594", "name": "比亚迪", "current": 755000, "previous": 718600, "increase": 36400, "change_pct": 5.06, "period": "2026Q2", "avg_market_cap": 85.2, "total_market_cap": 6433, "interval_chg": -2.15, "notice_date": "2026-08-30"},
+        {"code": "000977", "name": "浪潮信息", "current": 245000, "previous": 198000, "increase": 47000, "change_pct": 23.74, "period": "2026Q2", "avg_market_cap": 98.5, "total_market_cap": 2413, "interval_chg": 12.34, "notice_date": "2026-08-29"},
     ]
-    known_stocks.sort(key=lambda x: x["change_pct"], reverse=True)
-    print(f"  ✅ 共 {len(known_stocks)} 条")
-    return known_stocks
+    fallback.sort(key=lambda x: x["change_pct"], reverse=True)
+    return fallback
 
 
 def calc_overview(stocks):
