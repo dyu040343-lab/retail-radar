@@ -133,6 +133,10 @@ def fetch_from_eastmoney():
                             retail_inflow = max(retail_net, 0)
                             retail_outflow = max(-retail_net, 0)
 
+                        main_net_yi = round(main_net / 100000000, 2)
+                        total_abs = abs(retail_net) + abs(main_net_yi)
+                        retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+                        retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
                         stocks.append({
                             "code": code, "name": name,
                             "price": round(price, 2) if isinstance(price, (int, float)) else 0,
@@ -140,7 +144,9 @@ def fetch_from_eastmoney():
                             "retail_inflow": round(retail_inflow, 2),
                             "retail_outflow": round(retail_outflow, 2),
                             "retail_net": round(retail_net, 2),
-                            "main_net": round(main_net / 100000000, 2),
+                            "main_net": main_net_yi,
+                            "retail_ratio": retail_ratio,
+                            "retail_share": retail_share,
                             "sector": guess_sector(name, code),
                         })
                     print(f"  ✅ {market}: {len(diff)} 条")
@@ -191,6 +197,9 @@ def fetch_from_sina():
                 price = float(item.get("trade", 0) or 0)
                 change_pct = float(item.get("changeratio", 0) or 0) * 100
 
+                total_abs = abs(retail_net) + abs(main_net)
+                retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+                retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
                 stocks.append({
                     "code": code, "name": name,
                     "price": round(price, 2) if price else 0,
@@ -199,6 +208,8 @@ def fetch_from_sina():
                     "retail_outflow": round(retail_outflow, 2),
                     "retail_net": round(retail_net, 2),
                     "main_net": round(main_net, 2),
+                    "retail_ratio": retail_ratio,
+                    "retail_share": retail_share,
                     "sector": guess_sector(name, code),
                 })
         except:
@@ -287,13 +298,19 @@ def get_fallback_data():
         outflow = max(-net, 0) + abs(net) * 0.3 + 0.3
         if net < 0:
             inflow, outflow = outflow, inflow
+        main_val = round(-net * 0.8, 2)
+        total_abs = abs(inflow - outflow) + abs(main_val)
+        retail_ratio = round((inflow - outflow) / total_abs * 100, 1) if total_abs > 0.01 else 0
+        retail_share = round(abs(inflow - outflow) / total_abs * 100, 1) if total_abs > 0.01 else 0
         stocks.append({
             "code": code, "name": name,
             "price": 0, "change_pct": 0,
             "retail_inflow": round(inflow, 2),
             "retail_outflow": round(outflow, 2),
             "retail_net": round(inflow - outflow, 2),
-            "main_net": round(-net * 0.8, 2),
+            "main_net": main_val,
+            "retail_ratio": retail_ratio,
+            "retail_share": retail_share,
             "sector": sector,
         })
     return stocks
@@ -323,9 +340,13 @@ def fetch_shareholder_count():
 
 
 def calc_overview(stocks):
-    """计算六维KPI"""
+    """计算KPI"""
     inflow_stocks = [s for s in stocks if s["retail_net"] > 0]
     outflow_stocks = [s for s in stocks if s["retail_net"] < 0]
+
+    total_retail = sum(abs(s["retail_net"]) for s in stocks)
+    total_main = sum(abs(s.get("main_net", 0)) for s in stocks)
+    overall_ratio = round(total_retail / (total_retail + total_main) * 100, 1) if (total_retail + total_main) > 0.01 else 0
 
     return {
         "inflow_amount": round(sum(s["retail_inflow"] for s in stocks), 2),
@@ -335,6 +356,8 @@ def calc_overview(stocks):
         "net_amount": round(sum(s["retail_net"] for s in stocks), 2),
         "net_count": len(inflow_stocks),
         "total_stocks": len(stocks),
+        "overall_retail_ratio": overall_ratio,
+        "overall_retail_share": overall_ratio,
     }
 
 

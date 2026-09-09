@@ -19,7 +19,6 @@ body {
 }
 .container { max-width: 1400px; margin: 0 auto; padding: 16px; }
 
-/* Header */
 .header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
@@ -42,10 +41,7 @@ body {
 .status-live { background: rgba(34,197,94,0.15); color: var(--green); }
 .status-cached { background: rgba(245,158,11,0.15); color: var(--yellow); }
 .status-static { background: rgba(239,68,68,0.15); color: var(--red); }
-.status-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  animation: blink 1.5s infinite;
-}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; animation: blink 1.5s infinite; }
 @keyframes blink { 50%{opacity:0.3} }
 .update-time { font-size: 12px; color: var(--dim); }
 .btn {
@@ -67,49 +63,44 @@ body {
 }
 .toggle-switch.on::after { transform: translateX(18px); }
 
-/* KPI Cards */
+/* KPI Cards - 4列 */
 .kpi-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 12px; margin-bottom: 20px;
 }
-.kpi-group { display: contents; }
 .kpi-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; position: relative; overflow: hidden;
 }
-.kpi-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-}
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
 .kpi-card.inflow::before { background: var(--green); }
 .kpi-card.outflow::before { background: var(--red); }
 .kpi-card.net::before { background: var(--accent); }
+.kpi-card.ratio::before { background: var(--purple); }
 .kpi-label { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
-.kpi-value {
-  font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums;
-}
+.kpi-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .kpi-card.inflow .kpi-value { color: var(--green); }
 .kpi-card.outflow .kpi-value { color: var(--red); }
 .kpi-card.net .kpi-value { color: var(--accent); }
-.kpi-sub {
-  font-size: 12px; color: var(--dim); margin-top: 4px;
-  display: flex; align-items: center; gap: 4px;
-}
+.kpi-card.ratio .kpi-value { color: var(--purple); }
+.kpi-sub { font-size: 12px; color: var(--dim); margin-top: 4px; }
 .kpi-sub .num { color: var(--text); font-weight: 600; }
+.ratio-bar {
+  height: 6px; background: var(--bg); border-radius: 3px; margin-top: 6px; overflow: hidden;
+}
+.ratio-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.ratio-bar-fill.retail { background: var(--purple); }
+.ratio-bar-fill.main { background: var(--blue); }
 
 /* Tabs */
-.tab-bar {
-  display: flex; gap: 4px; margin-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
+.tab-bar { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
 .tab {
   padding: 10px 20px; font-size: 14px; color: var(--dim);
-  cursor: pointer; border-bottom: 2px solid transparent;
-  transition: all 0.2s;
+  cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
 }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-.subtab-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.subtab-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 .subtab {
   padding: 6px 16px; border-radius: 8px; font-size: 13px;
   background: var(--card); border: 1px solid var(--border);
@@ -126,24 +117,17 @@ body {
 }
 .chart-box h3 { font-size: 14px; margin-bottom: 12px; color: var(--dim); }
 .bar-item { margin-bottom: 8px; }
-.bar-info {
-  display: flex; justify-content: space-between; margin-bottom: 4px;
-  font-size: 12px;
-}
+.bar-info { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
 .bar-name { font-weight: 600; }
 .bar-value { font-variant-numeric: tabular-nums; }
-.bar-track {
-  height: 18px; background: var(--bg); border-radius: 4px; overflow: hidden;
-}
-.bar-fill {
-  height: 100%; border-radius: 4px;
-  transition: width 0.5s ease;
-}
+.bar-track { height: 18px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .bar-fill.green { background: linear-gradient(90deg, var(--green), #16a34a); }
 .bar-fill.red { background: linear-gradient(90deg, var(--red), #dc2626); }
 .bar-fill.accent { background: linear-gradient(90deg, var(--accent), #006b54); }
+.bar-fill.purple { background: linear-gradient(90deg, var(--purple), #7c3aed); }
+.bar-fill.blue { background: linear-gradient(90deg, var(--blue), #2563eb); }
 
-/* Table */
 .table-box {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; height: 520px; overflow-y: auto;
@@ -159,21 +143,19 @@ td { padding: 8px; border-bottom: 1px solid var(--border); }
 tr:hover { background: rgba(255,255,255,0.03); }
 .price-up { color: var(--red); }
 .price-down { color: var(--green); }
-.tag {
-  padding: 2px 6px; border-radius: 4px; font-size: 10px;
-  background: rgba(255,255,255,0.06);
-}
+.tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; background: rgba(255,255,255,0.06); }
+.ratio-cell { display: flex; align-items: center; gap: 4px; }
+.mini-bar { width: 40px; height: 4px; border-radius: 2px; overflow: hidden; display: inline-block; }
+.mini-fill { height: 100%; }
 
-/* Shareholder section */
 .shareholder-section {
   margin-top: 20px; background: var(--card);
   border: 1px solid var(--border); border-radius: 12px; padding: 16px;
 }
 .shareholder-section h3 { font-size: 14px; margin-bottom: 12px; }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .kpi-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
   .content { grid-template-columns: 1fr; }
   .header-right { flex-wrap: wrap; }
 }
@@ -186,24 +168,22 @@ tr:hover { background: rgba(255,255,255,0.03); }
       <div class="logo">📡</div>
       <div class="title">
         <h1>散户雷达侦探</h1>
-        <span>RETAIL INVESTOR RADAR · 六维散户动向实时扫描</span>
+        <span>RETAIL INVESTOR RADAR · 散户资金 × 散户/主力比例 实时扫描</span>
       </div>
     </div>
     <div class="header-right">
       <div class="status-badge" id="statusBadge">
-        <span class="status-dot"></span>
-        <span id="statusText">加载中</span>
+        <span class="status-dot"></span><span id="statusText">加载中</span>
       </div>
       <span class="update-time" id="updateTime">更新时间：--</span>
       <button class="btn" onclick="fetchData()">🔄 刷新</button>
-      <div class="toggle">
-        <span>自动(60s)</span>
+      <div class="toggle"><span>自动(60s)</span>
         <div class="toggle-switch" id="autoToggle" onclick="toggleAuto()"></div>
       </div>
     </div>
   </div>
 
-  <!-- 六维KPI -->
+  <!-- 四维KPI -->
   <div class="kpi-grid">
     <div class="kpi-card inflow">
       <div class="kpi-label">💰 散户流入资金</div>
@@ -216,16 +196,24 @@ tr:hover { background: rgba(255,255,255,0.03); }
       <div class="kpi-sub">流出个股 <span class="num" id="kpiOutflowCount">--</span> 只</div>
     </div>
     <div class="kpi-card net">
-      <div class="kpi-label">⚖️ 散户净流入资金</div>
+      <div class="kpi-label">⚖️ 散户净流入</div>
       <div class="kpi-value" id="kpiNetAmount">--</div>
       <div class="kpi-sub">净流入个股 <span class="num" id="kpiNetCount">--</span> 只</div>
+    </div>
+    <div class="kpi-card ratio">
+      <div class="kpi-label">🎯 散户/主力资金比</div>
+      <div class="kpi-value" id="kpiRatio">--</div>
+      <div class="kpi-sub">散户占比 <span class="num" id="kpiRatioNum">--</span>%</div>
+      <div class="ratio-bar">
+        <div class="ratio-bar-fill retail" id="ratioBarRetail" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
   <!-- 主Tab -->
   <div class="tab-bar">
     <div class="tab active" onclick="switchTab('flow')">📊 资金维度</div>
-    <div class="tab" onclick="switchTab('count')">👥 户数维度</div>
+    <div class="tab" onclick="switchTab('ratio')">🎯 占比维度</div>
   </div>
 
   <!-- 子Tab -->
@@ -233,6 +221,8 @@ tr:hover { background: rgba(255,255,255,0.03); }
     <div class="subtab active" onclick="switchSub('inflow')">流入TOP</div>
     <div class="subtab" onclick="switchSub('outflow')">流出TOP</div>
     <div class="subtab" onclick="switchSub('net')">净流入TOP</div>
+    <div class="subtab" onclick="switchSub('ratio_dominant')">散户主导TOP</div>
+    <div class="subtab" onclick="switchSub('main_dominant')">主力主导TOP</div>
   </div>
 
   <!-- 数据内容 -->
@@ -276,6 +266,7 @@ let allData = null;
 let currentTab = 'flow';
 let currentSub = 'inflow';
 let autoTimer = null;
+let sortCol = null, sortAsc = false;
 
 const STATUS_MAP = {
   live: { cls: 'status-live', text: '实时数据' },
@@ -289,7 +280,6 @@ async function fetchData() {
     allData = await resp.json();
     render();
   } catch(e) {
-    console.error('fetch error:', e);
     document.getElementById('statusText').textContent = '加载失败';
   }
 }
@@ -303,13 +293,18 @@ function render() {
   document.getElementById('statusText').textContent = status.text;
   document.getElementById('updateTime').textContent = '更新时间：' + allData.last_updated;
 
-  document.getElementById('kpiInflowAmount').textContent = ov.inflow_amount?.toFixed(2) + '亿';
+  document.getElementById('kpiInflowAmount').textContent = (ov.inflow_amount||0).toFixed(2) + '亿';
   document.getElementById('kpiInflowCount').textContent = ov.inflow_count;
-  document.getElementById('kpiOutflowAmount').textContent = ov.outflow_amount?.toFixed(2) + '亿';
+  document.getElementById('kpiOutflowAmount').textContent = (ov.outflow_amount||0).toFixed(2) + '亿';
   document.getElementById('kpiOutflowCount').textContent = ov.outflow_count;
-  const netAmt = ov.net_amount || 0;
-  document.getElementById('kpiNetAmount').textContent = (netAmt >= 0 ? '+' : '') + netAmt.toFixed(2) + '亿';
+  const net = ov.net_amount || 0;
+  document.getElementById('kpiNetAmount').textContent = (net >= 0 ? '+' : '') + net.toFixed(2) + '亿';
   document.getElementById('kpiNetCount').textContent = ov.net_count;
+
+  const ratio = ov.overall_retail_ratio || 0;
+  document.getElementById('kpiRatio').textContent = ratio.toFixed(1) + '%';
+  document.getElementById('kpiRatioNum').textContent = ratio.toFixed(1);
+  document.getElementById('ratioBarRetail').style.width = Math.min(Math.abs(ratio), 100) + '%';
 
   renderFlow();
   renderShareholders();
@@ -321,119 +316,96 @@ function renderFlow() {
   let sorted, title, color;
 
   if (currentSub === 'inflow') {
-    sorted = stocks.sort((a,b) => b.retail_inflow - a.retail_inflow).slice(0, 30);
-    title = '散户流入资金 TOP30';
-    color = 'green';
+    sorted = stocks.sort((a,b) => (b.retail_inflow||0) - (a.retail_inflow||0)).slice(0, 30);
+    title = '散户流入资金 TOP30'; color = 'green';
   } else if (currentSub === 'outflow') {
-    sorted = stocks.sort((a,b) => b.retail_outflow - a.retail_outflow).slice(0, 30);
-    title = '散户流出资金 TOP30';
-    color = 'red';
-  } else {
-    sorted = stocks.sort((a,b) => b.retail_net - a.retail_net).slice(0, 30);
-    title = '散户净流入 TOP30';
-    color = 'accent';
+    sorted = stocks.sort((a,b) => (b.retail_outflow||0) - (a.retail_outflow||0)).slice(0, 30);
+    title = '散户流出资金 TOP30'; color = 'red';
+  } else if (currentSub === 'net') {
+    sorted = stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
+    title = '散户净流入 TOP30'; color = 'accent';
+  } else if (currentSub === 'ratio_dominant') {
+    sorted = stocks.filter(s => s.retail_ratio > 0).sort((a,b) => (b.retail_ratio||0) - (a.retail_ratio||0)).slice(0, 30);
+    title = '散户主导个股 TOP（散户/主力资金比）'; color = 'purple';
+  } else if (currentSub === 'main_dominant') {
+    sorted = stocks.filter(s => s.retail_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.retail_ratio||0) - (b.retail_ratio||0)).slice(0, 30);
+    title = '主力主导个股 TOP（散户/主力资金比）'; color = 'blue';
   }
 
   document.getElementById('chartTitle').textContent = title;
-
-  if (currentTab === 'flow') {
-    renderChart(sorted, currentSub, color);
-    renderTable(sorted, 'flow');
-  } else {
-    renderCountChart(sorted, currentSub);
-    renderTable(sorted, 'count');
-  }
+  renderChart(sorted, currentSub, color);
+  renderTable(sorted);
 }
 
 function renderChart(stocks, type, color) {
-  const maxVal = Math.max(...stocks.map(s => Math.abs(type==='inflow'?s.retail_inflow : type==='outflow'?s.retail_outflow : s.retail_net)), 0.01);
+  if (!stocks || stocks.length === 0) {
+    document.getElementById('chartArea').innerHTML = '<div style="color:var(--dim);text-align:center;padding:40px;">暂无数据</div>';
+    return;
+  }
+  const maxVal = Math.max(...stocks.map(s => {
+    if (type === 'inflow') return Math.abs(s.retail_inflow || 0);
+    if (type === 'outflow') return Math.abs(s.retail_outflow || 0);
+    if (type === 'net') return Math.abs(s.retail_net || 0);
+    return Math.abs(s.retail_ratio || 0);
+  }), 0.01);
   let html = '';
   for (const s of stocks.slice(0, 25)) {
-    let val = type==='inflow' ? s.retail_inflow : type==='outflow' ? s.retail_outflow : s.retail_net;
+    let val, displayVal, valColor, barColor;
+    if (type === 'inflow') {
+      val = s.retail_inflow || 0; displayVal = val.toFixed(2) + '亿'; valColor = 'var(--green)'; barColor = 'green';
+    } else if (type === 'outflow') {
+      val = s.retail_outflow || 0; displayVal = val.toFixed(2) + '亿'; valColor = 'var(--red)'; barColor = 'red';
+    } else if (type === 'net') {
+      val = s.retail_net || 0; displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
+      valColor = val >= 0 ? 'var(--green)' : 'var(--red)'; barColor = val >= 0 ? 'green' : 'red';
+    } else if (type === 'ratio_dominant') {
+      val = s.retail_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--purple)'; barColor = 'purple';
+    } else if (type === 'main_dominant') {
+      val = s.retail_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--blue)'; barColor = 'blue';
+    }
     let pct = Math.abs(val) / maxVal * 100;
-    let displayVal = (val >= 0 ? '+' : '') + val.toFixed(2);
-    let barColor = val >= 0 ? color : 'red';
-    html += `<div class="bar-item">
-      <div class="bar-info"><span class="bar-name">${s.name}</span><span class="bar-value" style="color:${val>=0?'var(--green)':'var(--red)'}">${displayVal}亿</span></div>
-      <div class="bar-track"><div class="bar-fill ${barColor}" style="width:${pct}%"></div></div>
-    </div>`;
+    html += '<div class="bar-item">' +
+      '<div class="bar-info"><span class="bar-name">' + s.name + '</span><span class="bar-value" style="color:' + valColor + '">' + displayVal + '</span></div>' +
+      '<div class="bar-track"><div class="bar-fill ' + barColor + '" style="width:' + pct + '%"></div></div>' +
+    '</div>';
   }
   document.getElementById('chartArea').innerHTML = html;
 }
 
-function renderCountChart(stocks, type) {
-  let title, color, sorted;
-  if (type === 'inflow') {
-    sorted = stocks.filter(s => s.retail_net > 0).sort((a,b) => b.retail_inflow - a.retail_inflow);
-    title = '散户流入个股排行'; color = 'green';
-  } else if (type === 'outflow') {
-    sorted = stocks.filter(s => s.retail_net < 0).sort((a,b) => b.retail_outflow - a.retail_outflow);
-    title = '散户流出个股排行'; color = 'red';
-  } else {
-    sorted = stocks.sort((a,b) => b.retail_net - a.retail_net);
-    title = '散户净流入个股排行'; color = 'accent';
-  }
-  document.getElementById('chartTitle').textContent = title + `（共${sorted.length}只）`;
+function renderTable(stocks) {
+  let headHtml = '<tr>' +
+    '<th onclick="sortTable(\'code\')">代码</th>' +
+    '<th onclick="sortTable(\'name\')">名称</th>' +
+    '<th onclick="sortTable(\'retail_inflow\')">流入(亿)</th>' +
+    '<th onclick="sortTable(\'retail_outflow\')">流出(亿)</th>' +
+    '<th onclick="sortTable(\'retail_net\')">净流入(亿)</th>' +
+    '<th onclick="sortTable(\'main_net\')">主力净额(亿)</th>' +
+    '<th onclick="sortTable(\'retail_ratio\')">散户占比</th>' +
+    '<th onclick="sortTable(\'price\')">价格</th>' +
+    '<th onclick="sortTable(\'change_pct\')">涨跌%</th>' +
+    '<th onclick="sortTable(\'sector\')">行业</th>' +
+  '</tr>';
 
-  const maxVal = Math.max(...sorted.map(s => Math.abs(s.retail_net)), 0.01);
-  let html = '';
-  for (const s of sorted.slice(0, 25)) {
-    let val = s.retail_net;
-    let pct = Math.abs(val) / maxVal * 100;
-    let barColor = val >= 0 ? 'green' : 'red';
-    let displayVal = (val >= 0 ? '+' : '') + val.toFixed(2);
-    html += `<div class="bar-item">
-      <div class="bar-info"><span class="bar-name">${s.name}</span><span class="bar-value" style="color:${val>=0?'var(--green)':'var(--red)'}">${displayVal}亿</span></div>
-      <div class="bar-track"><div class="bar-fill ${barColor}" style="width:${pct}%"></div></div>
-    </div>`;
-  }
-  document.getElementById('chartArea').innerHTML = html;
-}
-
-function renderTable(stocks, mode) {
-  let headHtml, bodyHtml = '';
-  if (mode === 'flow') {
-    headHtml = `<tr>
-      <th onclick="sortTable('code')">代码</th>
-      <th onclick="sortTable('name')">名称</th>
-      <th onclick="sortTable('retail_inflow')">流入(亿)</th>
-      <th onclick="sortTable('retail_outflow')">流出(亿)</th>
-      <th onclick="sortTable('retail_net')">净流入(亿)</th>
-      <th onclick="sortTable('price')">价格</th>
-      <th onclick="sortTable('change_pct')">涨跌%</th>
-      <th onclick="sortTable('sector')">行业</th>
-    </tr>`;
-    for (const s of stocks) {
-      const cls = s.change_pct > 0 ? 'price-up' : s.change_pct < 0 ? 'price-down' : '';
-      bodyHtml += `<tr>
-        <td style="color:var(--dim)">${s.code}</td>
-        <td style="font-weight:600">${s.name}</td>
-        <td style="color:var(--green)">${s.retail_inflow?.toFixed(2)}</td>
-        <td style="color:var(--red)">${s.retail_outflow?.toFixed(2)}</td>
-        <td style="color:${s.retail_net>=0?'var(--green)':'var(--red)'};font-weight:600">${(s.retail_net>=0?'+':'')+s.retail_net?.toFixed(2)}</td>
-        <td>${s.price > 0 ? s.price.toFixed(2) : '--'}</td>
-        <td class="${cls}">${s.change_pct ? (s.change_pct>0?'+':'')+s.change_pct.toFixed(2)+'%' : '--'}</td>
-        <td><span class="tag">${s.sector}</span></td>
-      </tr>`;
-    }
-  } else {
-    headHtml = `<tr>
-      <th>代码</th><th>名称</th>
-      <th>流入额(亿)</th><th>流出额(亿)</th><th>净额(亿)</th>
-      <th>方向</th><th>行业</th>
-    </tr>`;
-    for (const s of stocks) {
-      const dir = s.retail_net > 0 ? '<span style="color:var(--green)">流入</span>' : '<span style="color:var(--red)">流出</span>';
-      bodyHtml += `<tr>
-        <td style="color:var(--dim)">${s.code}</td>
-        <td style="font-weight:600">${s.name}</td>
-        <td style="color:var(--green)">${s.retail_inflow?.toFixed(2)}</td>
-        <td style="color:var(--red)">${s.retail_outflow?.toFixed(2)}</td>
-        <td style="color:${s.retail_net>=0?'var(--green)':'var(--red)'};font-weight:600">${(s.retail_net>=0?'+':'')+s.retail_net?.toFixed(2)}</td>
-        <td>${dir}</td>
-        <td><span class="tag">${s.sector}</span></td>
-      </tr>`;
-    }
+  let bodyHtml = '';
+  for (const s of stocks) {
+    const cls = s.change_pct > 0 ? 'price-up' : s.change_pct < 0 ? 'price-down' : '';
+    const ratio = s.retail_ratio || 0;
+    const ratioColor = ratio > 0 ? 'var(--purple)' : 'var(--blue)';
+    const ratioBarWidth = Math.min(Math.abs(ratio), 100);
+    const ratioBarColor = ratio > 0 ? 'var(--purple)' : 'var(--blue)';
+    bodyHtml += '<tr>' +
+      '<td style="color:var(--dim)">' + s.code + '</td>' +
+      '<td style="font-weight:600">' + s.name + '</td>' +
+      '<td style="color:var(--green)">' + (s.retail_inflow||0).toFixed(2) + '</td>' +
+      '<td style="color:var(--red)">' + (s.retail_outflow||0).toFixed(2) + '</td>' +
+      '<td style="color:' + (s.retail_net >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:600">' + (s.retail_net >= 0 ? '+' : '') + (s.retail_net||0).toFixed(2) + '</td>' +
+      '<td style="color:' + ((s.main_net||0) >= 0 ? 'var(--green)' : 'var(--red)') + '">' + ((s.main_net||0) >= 0 ? '+' : '') + (s.main_net||0).toFixed(2) + '</td>' +
+      '<td><div class="ratio-cell"><span style="color:' + ratioColor + ';font-weight:600">' + ratio.toFixed(1) + '%</span>' +
+        '<span class="mini-bar"><span class="mini-fill" style="width:' + ratioBarWidth + '%;background:' + ratioBarColor + '"></span></span></div></td>' +
+      '<td>' + (s.price > 0 ? s.price.toFixed(2) : '--') + '</td>' +
+      '<td class="' + cls + '">' + (s.change_pct ? (s.change_pct > 0 ? '+' : '') + s.change_pct.toFixed(2) + '%' : '--') + '</td>' +
+      '<td><span class="tag">' + s.sector + '</span></td>' +
+    '</tr>';
   }
   document.getElementById('tableHead').innerHTML = headHtml;
   document.getElementById('tableBody').innerHTML = bodyHtml;
@@ -443,28 +415,16 @@ function renderShareholders() {
   if (!allData?.shareholder_count) return;
   const increase = allData.shareholder_count.filter(s => s.change_pct > 0).sort((a,b) => b.change_pct - a.change_pct);
   const decrease = allData.shareholder_count.filter(s => s.change_pct < 0).sort((a,b) => a.change_pct - b.change_pct);
-
-  let incHtml = '';
+  let html = '';
   for (const s of increase) {
-    incHtml += `<tr>
-      <td style="font-weight:600">${s.name}</td>
-      <td style="text-align:right">${(s.current/10000).toFixed(1)}万</td>
-      <td style="color:var(--red);text-align:right">+${s.change_pct.toFixed(1)}%</td>
-      <td style="color:var(--dim)">${s.period}</td>
-    </tr>`;
+    html += '<tr><td style="font-weight:600">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--red);text-align:right">+' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
   }
-  document.getElementById('holderIncreaseBody').innerHTML = incHtml;
-
-  let decHtml = '';
+  document.getElementById('holderIncreaseBody').innerHTML = html;
+  html = '';
   for (const s of decrease) {
-    decHtml += `<tr>
-      <td style="font-weight:600">${s.name}</td>
-      <td style="text-align:right">${(s.current/10000).toFixed(1)}万</td>
-      <td style="color:var(--green);text-align:right">${s.change_pct.toFixed(1)}%</td>
-      <td style="color:var(--dim)">${s.period}</td>
-    </tr>`;
+    html += '<tr><td style="font-weight:600">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--green);text-align:right">' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
   }
-  document.getElementById('holderDecreaseBody').innerHTML = decHtml;
+  document.getElementById('holderDecreaseBody').innerHTML = html;
 }
 
 function switchTab(tab) {
@@ -481,17 +441,16 @@ function switchSub(sub) {
   renderFlow();
 }
 
-let sortCol = null, sortAsc = true;
 function sortTable(col) {
   if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = false; }
   if (!allData?.retail_flow) return;
   let stocks = [...allData.retail_flow];
   stocks.sort((a,b) => {
-    let va = a[col], vb = b[col];
+    let va = a[col] || 0, vb = b[col] || 0;
     if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
     return sortAsc ? va - vb : vb - va;
   });
-  renderTable(stocks.slice(0, 50), currentTab === 'flow' ? 'flow' : 'count');
+  renderTable(stocks.slice(0, 50));
 }
 
 function toggleAuto() {
