@@ -176,7 +176,63 @@ tr:hover { background: rgba(255,255,255,0.03); }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .content { grid-template-columns: 1fr; }
   .header-right { flex-wrap: wrap; }
+  .footer-meta { flex-direction: column; gap: 4px; }
 }
+
+/* 合规页脚 */
+.compliance-footer {
+  margin-top: 32px; padding: 24px 0 16px;
+  border-top: 1px solid var(--border);
+}
+.footer-disclaimer {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px; margin-bottom: 16px;
+}
+.footer-disclaimer strong {
+  font-size: 13px; color: var(--yellow); display: block; margin-bottom: 8px;
+}
+.footer-disclaimer p {
+  font-size: 12px; color: var(--dim); line-height: 1.6;
+}
+.footer-links {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 12px;
+}
+.footer-links a {
+  color: var(--accent); font-size: 12px; text-decoration: none;
+}
+.footer-links a:hover { text-decoration: underline; }
+.footer-links span { color: var(--border); font-size: 12px; }
+.footer-meta {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 8px;
+}
+.footer-meta span {
+  font-size: 11px; color: var(--dim);
+}
+.footer-copy {
+  text-align: center; font-size: 11px; color: var(--dim);
+  padding-top: 8px; border-top: 1px solid var(--border);
+}
+
+/* 合规子页面通用样式 */
+.compliance-page {
+  max-width: 800px; margin: 0 auto; padding: 24px 16px;
+}
+.compliance-page h1 {
+  font-size: 20px; margin-bottom: 16px; color: var(--accent);
+}
+.compliance-page h2 {
+  font-size: 15px; margin: 20px 0 8px; color: var(--text);
+}
+.compliance-page p, .compliance-page li {
+  font-size: 13px; color: var(--dim); line-height: 1.8;
+}
+.compliance-page .back-link {
+  display: inline-block; margin-top: 24px;
+  color: var(--accent); text-decoration: none; font-size: 13px;
+}
+.compliance-page .back-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -289,6 +345,31 @@ tr:hover { background: rgba(255,255,255,0.03); }
       </div>
     </div>
   </div>
+
+  <!-- 合规页脚 -->
+  <footer class="compliance-footer">
+    <div class="footer-disclaimer">
+      <strong>风险提示与免责声明</strong>
+      <p>本站数据来源于东方财富、新浪财经等公开渠道，仅供参考，不构成任何投资建议。投资者应独立判断投资决策，自行承担投资风险。本站不对任何因使用本站数据而导致的损失承担责任。</p>
+    </div>
+    <div class="footer-links">
+      <a href="about.html">关于我们</a>
+      <span>|</span>
+      <a href="terms.html">用户服务协议</a>
+      <span>|</span>
+      <a href="privacy.html">隐私政策</a>
+      <span>|</span>
+      <a href="disclaimer.html">免责声明</a>
+    </div>
+    <div class="footer-meta">
+      <span>数据来源：东方财富 / 新浪财经（公开API）</span>
+      <span>本站不提供证券投资咨询服务</span>
+      <span>非营利性个人项目 | 未进行ICP备案（部署于境外服务器）</span>
+    </div>
+    <div class="footer-copy">
+      <span>© 2026 小散研究院 XiaoSan Lab. All rights reserved.</span>
+    </div>
+  </footer>
 </div>
 
 <script>

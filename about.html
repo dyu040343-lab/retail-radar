@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关于我们 - 小散研究院</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0e17; --card: #111827; --border: #1e293b;
+  --text: #e2e8f0; --dim: #64748b; --accent: #00d4aa;
+}
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+}
+.container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+.header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+}
+.logo {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: radial-gradient(circle, var(--accent), #006b54);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.title h1 { font-size: 20px; font-weight: 700; }
+.title span { font-size: 11px; color: var(--dim); }
+.compliance-page {
+  max-width: 800px; margin: 0 auto; padding: 24px 16px;
+}
+.compliance-page h1 { font-size: 20px; margin-bottom: 16px; color: var(--accent); }
+.compliance-page h2 { font-size: 15px; margin: 20px 0 8px; color: var(--text); }
+.compliance-page p, .compliance-page li { font-size: 13px; color: var(--dim); line-height: 1.8; }
+.compliance-page ul { padding-left: 20px; }
+.back-link {
+  display: inline-block; margin-top: 24px;
+  color: var(--accent); text-decoration: none; font-size: 13px;
+}
+.back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">📡</div>
+    <div class="title">
+      <h1>小散研究院</h1>
+      <span>XIAOSAN LAB</span>
+    </div>
+  </div>
+  <div class="compliance-page">
+    <h1>关于我们</h1>
+
+    <h2>项目简介</h2>
+    <p>小散研究院（XiaoSan Lab）是一个非营利性个人项目，旨在为A股市场散户投资者提供公开可获取的散户资金流向数据和股东户数变化信息。我们相信信息透明是散户保护自己的第一步。</p>
+
+    <h2>数据来源</h2>
+    <ul>
+      <li>东方财富网（eastmoney.com）公开API - 实时散户资金流向数据</li>
+      <li>新浪财经（finance.sina.com.cn）公开API - 收盘后散户资金流向数据</li>
+      <li>上市公司定期公告 - 股东户数变化数据（来源于巨潮资讯网等公开渠道）</li>
+    </ul>
+    <p>本站所有数据均来自上述公开渠道，不进行任何深度加工或衍生计算。</p>
+
+    <h2>运营性质</h2>
+    <ul>
+      <li>非营利性：本站不收取任何费用，不投放广告</li>
+      <li>非投资咨询：本站不提供证券投资咨询服务，不推荐个股，不提供买卖建议</li>
+      <li>非行情服务：本站不提供实时行情数据，不替代任何行情软件</li>
+    </ul>
+
+    <h2>联系我们</h2>
+    <p>如对本站内容有任何疑问，可通过以下方式联系：</p>
+    <ul>
+      <li>GitHub: github.com/dyu040343-lab/xiaosan-lab</li>
+      <li>邮箱: 联系站长获取</li>
+    </ul>
+
+    <a href="retail-radar.html" class="back-link">← 返回首页</a>
+  </div>
+</div>
+</body>
+</html>
