@@ -71,46 +71,83 @@ def to_float(val):
 
 
 def fetch_from_akshare():
-    """akshare 全市场个股资金流排行 - 四档完整数据"""
-    print("🔍 [数据源] akshare（东方财富四档资金流）...")
-    try:
-        import akshare as ak
-    except ImportError:
-        print("  ❌ akshare 未安装，请运行: pip install akshare")
-        return []
+    """直接请求东方财富 push2 API - 四档完整数据"""
+    print("🔍 [数据源] 东方财富 push2（四档资金流）...")
+
+    EM_HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://data.eastmoney.com/bkzj/hy.html",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+    }
+
+    all_stocks = []
+    page = 1
+    total_pages = 1
 
     for attempt in range(3):
         try:
-            df = ak.stock_individual_fund_flow_rank(indicator="今日")
-            print(f"  📊 akshare 返回 {len(df)} 条")
+            all_stocks = []
+            page = 1
+            while page <= total_pages:
+                url = "https://push2.eastmoney.com/api/qt/clist/get"
+                params = {
+                    "pn": page,
+                    "pz": 5000,
+                    "po": 1,
+                    "np": 1,
+                    "fltt": 2,
+                    "invt": 2,
+                    "fid": "f62",
+                    "fs": "m:0 t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
+                    "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
+                }
+                resp = requests.get(url, params=params, headers=EM_HEADERS, timeout=15)
+                resp.encoding = "utf-8"
+                data = resp.json()
+                if data.get("data") is None:
+                    break
+                total = data["data"].get("total", 0)
+                total_pages = (total + 4999) // 5000
+                items = data["data"].get("diff", [])
+                all_stocks.extend(items)
+                print(f"  📄 第{page}/{total_pages}页: {len(items)} 条")
+                page += 1
+
+            print(f"  📊 东方财富返回 {len(all_stocks)} 条")
             break
         except Exception as e:
             print(f"  ⚠️ 第{attempt+1}/3次获取失败: {e}")
             if attempt == 2:
+                print("  📦 akshare 不可用，尝试缓存...")
                 return []
+            time.sleep(2)
     else:
         return []
 
+    # 字段映射: f62=主力净额, f184=主力净占比, f66=超大单净额, f69=超大单净占比,
+    #          f72=大单净额, f75=大单净占比, f78=中单净额, f81=中单净占比,
+    #          f84=小单净额, f87=小单净占比, f124=5日涨跌
     stocks = []
-    for _, row in df.iterrows():
-        code = str(row.get("代码", "")).strip()
-        name = str(row.get("名称", "")).strip()
+    for item in all_stocks:
+        code = str(item.get("f12", "")).strip()
+        name = str(item.get("f14", "")).strip()
         if not code or not name:
             continue
 
-        price = to_float(row.get("最新价"))
-        change_pct = to_float(row.get("涨跌幅"))
+        price = to_float(item.get("f2"))
+        change_pct = to_float(item.get("f3"))
         change_pct = change_pct * 100 if abs(change_pct) < 1 else change_pct
 
-        super_net = to_float(row.get("超大单净流入-净额"))
-        large_net = to_float(row.get("大单净流入-净额"))
-        medium_net = to_float(row.get("中单净流入-净额"))
-        small_net = to_float(row.get("小单净流入-净额"))
+        super_net = to_float(item.get("f66"))
+        large_net = to_float(item.get("f72"))
+        medium_net = to_float(item.get("f78"))
+        small_net = to_float(item.get("f84"))
 
-        super_pct = to_float(row.get("超大单净流入-净占比"))
-        large_pct = to_float(row.get("大单净流入-净占比"))
-        medium_pct = to_float(row.get("中单净流入-净占比"))
-        small_pct = to_float(row.get("小单净流入-净占比"))
+        super_pct = to_float(item.get("f69"))
+        large_pct = to_float(item.get("f75"))
+        medium_pct = to_float(item.get("f81"))
+        small_pct = to_float(item.get("f87"))
 
         yi = 100000000
         super_net_yi = round(super_net / yi, 4)
