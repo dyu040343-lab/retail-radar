@@ -101,7 +101,7 @@ def fetch_from_eastmoney():
             page = 1
             while True:
                 params = {
-                    "pn": str(page), "pz": "200", "po": "1", "np": "1",
+                    "pn": str(page), "pz": "100", "po": "1", "np": "1",
                     "ut": "b2884a393a59ad64002292a3e90d46a5",
                     "fltt": "2", "invt": "2", "fid": "f84",
                     "fs": fs,
@@ -113,6 +113,7 @@ def fetch_from_eastmoney():
                     if resp.status_code == 200 and resp.text.strip():
                         data = resp.json()
                         diff = data.get("data", {}).get("diff", [])
+                        total = data.get("data", {}).get("total", 0)
                         if not diff:
                             break
                         for item in diff:
@@ -145,7 +146,7 @@ def fetch_from_eastmoney():
                                 "sector": guess_sector(name, code),
                                 "source": "eastmoney",
                             })
-                        if len(diff) < 200:
+                        if len(diff) < 100:
                             break
                         page += 1
                     else:
