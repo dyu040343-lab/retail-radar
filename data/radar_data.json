@@ -11,9 +11,13 @@
     "static_ratio": 6.5,
     "total_retail_amount": 1060.43,
     "total_market_amount": 16225.1,
-    "update_time": "2026-09-10 15:36:50",
-    "data_status": "live",
-    "data_label": "实时数据"
+    "super_total": 0,
+    "large_total": 0,
+    "medium_total": 0,
+    "small_total": 0,
+    "update_time": "2026-09-10 08:37:25",
+    "data_status": "cached",
+    "data_label": "收盘数据（缓存）"
   },
   "retail_flow": [
     {
@@ -102690,7 +102694,7 @@
       "notice_date": "2026-08-28"
     }
   ],
-  "last_updated": "2026-09-10 15:36:50",
-  "data_source": "东方财富/新浪财经",
-  "data_status": "live"
+  "last_updated": "2026-09-10 08:37:25",
+  "data_source": "缓存数据",
+  "data_status": "cached"
 }
