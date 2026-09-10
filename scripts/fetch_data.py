@@ -164,8 +164,8 @@ def fetch_from_akshare():
             continue
 
         price = to_float(item.get("f2"))
+        # fltt=2 时 f3 直接就是百分数（如 -4.07 表示 -4.07%），不做任何换算
         change_pct = to_float(item.get("f3"))
-        change_pct = change_pct * 100 if abs(change_pct) < 1 else change_pct
 
         super_net = to_float(item.get("f66"))
         large_net = to_float(item.get("f72"))
