@@ -8,14 +8,11 @@
     "net_count": 1096,
     "total_stocks": 5963,
     "dynamic_ratio": 9.7,
-    "static_ratio": 6.5,
-    "total_retail_amount": 1060.43,
-    "total_market_amount": 16225.1,
     "super_total": 0,
     "large_total": 0,
     "medium_total": 0,
     "small_total": 0,
-    "update_time": "2026-09-10 08:37:25",
+    "update_time": "2026-09-10 10:01:26",
     "data_status": "cached",
     "data_label": "收盘数据（缓存）"
   },
@@ -102694,7 +102691,7 @@
       "notice_date": "2026-08-28"
     }
   ],
-  "last_updated": "2026-09-10 08:37:25",
+  "last_updated": "2026-09-10 10:01:26",
   "data_source": "缓存数据",
   "data_status": "cached"
 }
