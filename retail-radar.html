@@ -3,285 +3,944 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小散研究院</title>
+<title>小散研究院 · XiaoSan Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #0a0e17; --card: #111827; --border: #1e293b;
-  --text: #e2e8f0; --dim: #64748b; --accent: #00d4aa;
-  --red: #ef4444; --green: #22c55e; --yellow: #f59e0b;
-  --blue: #3b82f6; --purple: #a855f7;
-}
-body {
-  background: var(--bg); color: var(--text);
-  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  min-height: 100vh; overflow-x: hidden;
-}
-.container { max-width: 1400px; margin: 0 auto; padding: 16px; }
 
+:root {
+  --bg-0: #07090f;
+  --bg-1: #0c1018;
+  --bg-2: #121723;
+  --card: #0f131c;
+  --border: #1a2030;
+  --border-hi: #2a3450;
+  --text: #d4dce8;
+  --text-hi: #f0f4fa;
+  --dim: #5a6378;
+  --dimmer: #3a4258;
+  --accent: #f5b942;
+  --accent-dim: #8a6b28;
+  --cyan: #00d4e8;
+  --cyan-dim: #0a6a78;
+  --red: #e8384a;
+  --red-dim: #6a1820;
+  --green: #22c55e;
+  --green-dim: #0e4a26;
+  --purple: #a855f7;
+  --purple-dim: #4a1f6a;
+  --blue: #3b82f6;
+  --blue-dim: #15264a;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--text);
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,185,66,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0,212,232,0.03) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══ Header ═══ */
 .header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.logo {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: radial-gradient(circle, var(--accent), #006b54);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; animation: pulse 2s infinite;
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-@keyframes pulse { 0%,100%{box-shadow:0 0 8px var(--accent)} 50%{box-shadow:0 0 20px var(--accent)} }
-.title h1 { font-size: 20px; font-weight: 700; }
-.title span { font-size: 11px; color: var(--dim); }
-.header-right { display: flex; align-items: center; gap: 12px; }
+
+.logo-wrap {
+  position: relative;
+  width: 48px; height: 48px;
+}
+
+.logo-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0.3;
+}
+
+.logo-ring::before {
+  content: ''; position: absolute;
+  top: -2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.logo-ring.spin {
+  animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.logo-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,185,66,0.15), rgba(245,185,66,0.02));
+  border: 1px solid var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.title-block h1 {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-hi);
+  letter-spacing: 1px;
+}
+
+.title-block .subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .status-badge {
-  padding: 4px 12px; border-radius: 20px; font-size: 12px;
-  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid;
 }
-.status-live { background: rgba(34,197,94,0.15); color: var(--green); }
-.status-cached { background: rgba(245,158,11,0.15); color: var(--yellow); }
-.status-static { background: rgba(239,68,68,0.15); color: var(--red); }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; animation: blink 1.5s infinite; }
-@keyframes blink { 50%{opacity:0.3} }
-.update-time { font-size: 12px; color: var(--dim); }
-.btn {
-  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
-  background: var(--card); color: var(--text); cursor: pointer; font-size: 12px;
+
+.status-live {
+  background: rgba(34,197,94,0.08);
+  color: var(--green);
+  border-color: rgba(34,197,94,0.25);
+}
+.status-cached {
+  background: rgba(245,185,66,0.08);
+  color: var(--accent);
+  border-color: rgba(245,185,66,0.25);
+}
+.status-static {
+  background: rgba(232,56,74,0.08);
+  color: var(--red);
+  border-color: rgba(232,56,74,0.25);
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.status-live .status-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-cached .status-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.status-static .status-dot { background: var(--red); }
+
+.update-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.btn-refresh {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hi);
+  background: var(--bg-1);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Noto Sans SC', sans-serif;
   transition: all 0.2s;
 }
-.btn:hover { border-color: var(--accent); color: var(--accent); }
-.toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+
+.btn-refresh:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 12px rgba(245,185,66,0.1);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
 .toggle-switch {
-  width: 36px; height: 18px; border-radius: 10px; background: var(--border);
-  position: relative; cursor: pointer; transition: background 0.3s;
+  width: 36px; height: 18px;
+  border-radius: 10px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
 }
-.toggle-switch.on { background: var(--accent); }
+
+.toggle-switch.on {
+  background: var(--accent-dim);
+}
+
 .toggle-switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px;
-  width: 14px; height: 14px; border-radius: 50%; background: white;
-  transition: transform 0.3s;
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: transform 0.3s, background 0.3s;
 }
-.toggle-switch.on::after { transform: translateX(18px); }
 
-/* Section headers */
+.toggle-switch.on::after {
+  transform: translateX(18px);
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ═══ Section Headers ═══ */
 .section-header {
-  display: flex; align-items: center; gap: 8px; margin: 20px 0 12px;
-}
-.section-header h2 { font-size: 15px; font-weight: 700; }
-.freq-tag {
-  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
-  display: inline-flex; align-items: center; gap: 4px;
-}
-.freq-tag.realtime { background: rgba(34,197,94,0.15); color: var(--green); }
-.freq-tag.quarterly { background: rgba(245,158,11,0.15); color: var(--yellow); }
-.freq-tag-dot { width: 5px; height: 5px; border-radius: 50%; }
-.freq-tag.realtime .freq-tag-dot { background: var(--green); animation: blink 1.5s infinite; }
-.freq-tag.quarterly .freq-tag-dot { background: var(--yellow); }
-.section-divider {
-  height: 1px; background: var(--border); margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 16px;
 }
 
-/* KPI Cards - 4列 */
+.section-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-hi);
+}
+
+.freq-tag {
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid;
+}
+
+.freq-tag.realtime {
+  background: rgba(34,197,94,0.08);
+  color: var(--green);
+  border-color: rgba(34,197,94,0.2);
+}
+
+.freq-tag.quarterly {
+  background: rgba(245,185,66,0.08);
+  color: var(--accent);
+  border-color: rgba(245,185,66,0.2);
+}
+
+.freq-tag-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+
+.freq-tag.realtime .freq-tag-dot {
+  background: var(--green);
+  animation: pulse-dot 2s infinite;
+}
+
+.freq-tag.quarterly .freq-tag-dot {
+  background: var(--accent);
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 32px 0;
+}
+
+/* ═══ KPI Cards ═══ */
 .kpi-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 12px; margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
 }
+
 .kpi-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; position: relative; overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  animation: card-in 0.5s ease-out forwards;
 }
-.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-.kpi-card.inflow::before { background: var(--green); }
-.kpi-card.outflow::before { background: var(--red); }
-.kpi-card.net::before { background: var(--accent); }
-.kpi-card.ratio::before { background: var(--purple); }
-.kpi-label { font-size: 12px; color: var(--dim); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-.kpi-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.kpi-card:nth-child(1) { animation-delay: 0.05s; }
+.kpi-card:nth-child(2) { animation-delay: 0.1s; }
+.kpi-card:nth-child(3) { animation-delay: 0.15s; }
+.kpi-card:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.kpi-card.inflow::before { background: linear-gradient(90deg, var(--green), transparent); }
+.kpi-card.outflow::before { background: linear-gradient(90deg, var(--red), transparent); }
+.kpi-card.net::before { background: linear-gradient(90deg, var(--accent), transparent); }
+.kpi-card.ratio::before { background: linear-gradient(90deg, var(--purple), transparent); }
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.04;
+}
+
+.kpi-card.inflow::after { background: var(--green); }
+.kpi-card.outflow::after { background: var(--red); }
+.kpi-card.net::after { background: var(--accent); }
+.kpi-card.ratio::after { background: var(--purple); }
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-label-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
 .kpi-card.inflow .kpi-value { color: var(--green); }
 .kpi-card.outflow .kpi-value { color: var(--red); }
 .kpi-card.net .kpi-value { color: var(--accent); }
 .kpi-card.ratio .kpi-value { color: var(--purple); }
-.kpi-sub { font-size: 12px; color: var(--dim); margin-top: 4px; }
-.kpi-sub .num { color: var(--text); font-weight: 600; }
-.ratio-bar {
-  height: 6px; background: var(--bg); border-radius: 3px; margin-top: 6px; overflow: hidden;
+
+.kpi-sub {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
 }
-.ratio-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+.kpi-sub .num {
+  color: var(--text-hi);
+  font-weight: 600;
+}
+
+.ratio-bar {
+  height: 5px;
+  background: var(--bg-1);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+  display: flex;
+}
+
+.ratio-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
 .ratio-bar-fill.retail { background: var(--purple); }
 .ratio-bar-fill.main { background: var(--blue); }
 
-/* Tabs */
-.tab-bar { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+/* ═══ Tabs ═══ */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
 .tab {
-  padding: 10px 20px; font-size: 14px; color: var(--dim);
-  cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+  padding: 10px 24px;
+  font-size: 13px;
+  color: var(--dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
 }
+
 .tab:hover { color: var(--text); }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.subtab-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%;
+  transform: translateX(-50%);
+  width: 20px; height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.subtab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 .subtab {
-  padding: 6px 16px; border-radius: 8px; font-size: 13px;
-  background: var(--card); border: 1px solid var(--border);
-  color: var(--dim); cursor: pointer; transition: all 0.2s;
+  padding: 6px 18px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.subtab:hover { color: var(--text); }
-.subtab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
 
-/* Content */
-.content { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.subtab:hover {
+  color: var(--text);
+  border-color: var(--border-hi);
+}
+
+.subtab.active {
+  background: rgba(245,185,66,0.1);
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  font-weight: 600;
+}
+
+/* ═══ Search ═══ */
+.search-bar {
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--text);
+  font-size: 12px;
+  font-family: 'Noto Sans SC', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder { color: var(--dimmer); }
+.search-input:focus { border-color: var(--accent-dim); }
+
+/* ═══ Content Grid ═══ */
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .chart-box {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; height: 520px; overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  height: 540px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hi) transparent;
 }
-.chart-box h3 { font-size: 14px; margin-bottom: 12px; color: var(--dim); }
-.bar-item { margin-bottom: 8px; }
-.bar-info { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
-.bar-name { font-weight: 600; }
-.bar-value { font-variant-numeric: tabular-nums; }
-.bar-track { height: 18px; background: var(--bg); border-radius: 4px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-.bar-fill.green { background: linear-gradient(90deg, var(--green), #16a34a); }
-.bar-fill.red { background: linear-gradient(90deg, var(--red), #dc2626); }
-.bar-fill.accent { background: linear-gradient(90deg, var(--accent), #006b54); }
-.bar-fill.purple { background: linear-gradient(90deg, var(--purple), #7c3aed); }
-.bar-fill.blue { background: linear-gradient(90deg, var(--blue), #2563eb); }
 
+.chart-box::-webkit-scrollbar { width: 4px; }
+.chart-box::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+.chart-box h3 {
+  font-size: 13px;
+  margin-bottom: 14px;
+  color: var(--dim);
+  font-weight: 500;
+}
+
+.bar-item {
+  margin-bottom: 6px;
+  opacity: 0;
+  animation: bar-in 0.3s ease-out forwards;
+}
+
+@keyframes bar-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.bar-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.bar-name { font-weight: 600; color: var(--text); }
+.bar-value { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.bar-track {
+  height: 16px;
+  background: var(--bg-1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.bar-fill.green { background: linear-gradient(90deg, var(--green), var(--green-dim)); }
+.bar-fill.red { background: linear-gradient(90deg, var(--red), var(--red-dim)); }
+.bar-fill.accent { background: linear-gradient(90deg, var(--accent), var(--accent-dim)); }
+.bar-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-dim)); }
+.bar-fill.blue { background: linear-gradient(90deg, var(--blue), var(--blue-dim)); }
+
+/* ═══ Table ═══ */
 .table-box {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; height: 520px; overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  height: 540px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hi) transparent;
 }
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+.table-box::-webkit-scrollbar { width: 4px; }
+.table-box::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
 th {
-  text-align: left; padding: 8px; color: var(--dim); font-weight: 500;
-  border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap;
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--dim);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
+
 th:hover { color: var(--accent); }
 th.sorted { color: var(--accent); }
-td { padding: 8px; border-bottom: 1px solid var(--border); }
-tr:hover { background: rgba(255,255,255,0.03); }
+
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+tr:hover { background: rgba(255,255,255,0.02); }
+
+td.name-cell {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+  color: var(--text-hi);
+}
+
+td.code-cell { color: var(--dim); font-size: 10px; }
+
 .price-up { color: var(--red); }
 .price-down { color: var(--green); }
-.tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; background: rgba(255,255,255,0.06); }
-.ratio-cell { display: flex; align-items: center; gap: 4px; }
-.mini-bar { width: 40px; height: 4px; border-radius: 2px; overflow: hidden; display: inline-block; }
-.mini-fill { height: 100%; }
 
-.shareholder-section {
-  margin-top: 20px; background: var(--card);
-  border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+.tag {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  background: rgba(255,255,255,0.04);
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--dim);
 }
-.shareholder-section h3 { font-size: 14px; margin-bottom: 12px; }
 
+.ratio-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mini-bar {
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  display: inline-block;
+  background: var(--bg-1);
+}
+
+.mini-fill { height: 100%; border-radius: 2px; }
+
+/* ═══ Shareholder Section ═══ */
+.shareholder-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sh-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hi) transparent;
+}
+
+.sh-card::-webkit-scrollbar { width: 4px; }
+.sh-card::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+.sh-card h4 {
+  font-size: 13px;
+  color: var(--text-hi);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sh-card h4 .sh-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+.sh-card h4 .sh-icon.up { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.sh-card h4 .sh-icon.down { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.sh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.sh-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--dim);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sh-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.sh-table .name-cell {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+}
+
+/* ═══ Compliance Footer ═══ */
+.compliance-footer {
+  margin-top: 40px;
+  padding: 28px 0 20px;
+  border-top: 1px solid var(--border);
+}
+
+.footer-disclaimer {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.footer-disclaimer strong {
+  font-size: 12px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.footer-disclaimer p {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.8;
+}
+
+.footer-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.footer-links a {
+  color: var(--accent);
+  font-size: 11px;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.footer-links a:hover { text-decoration: underline; }
+
+.footer-links span {
+  color: var(--dimmer);
+  font-size: 11px;
+}
+
+.footer-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.footer-meta span {
+  font-size: 10px;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.footer-copy {
+  text-align: center;
+  font-size: 10px;
+  color: var(--dim);
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* ═══ Loading Skeleton ═══ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-1) 25%, var(--bg-2) 50%, var(--bg-1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-bar { height: 16px; margin-bottom: 8px; }
+.skeleton-kpi { height: 28px; width: 60%; margin-bottom: 6px; }
+
+/* ═══ Responsive ═══ */
 @media (max-width: 768px) {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .content { grid-template-columns: 1fr; }
-  .header-right { flex-wrap: wrap; }
-  .footer-meta { flex-direction: column; gap: 4px; }
+  .shareholder-grid { grid-template-columns: 1fr; }
+  .header-right { flex-wrap: wrap; gap: 8px; }
+  .footer-meta { flex-direction: column; gap: 4px; align-items: center; }
 }
 
-/* 合规页脚 */
-.compliance-footer {
-  margin-top: 32px; padding: 24px 0 16px;
-  border-top: 1px solid var(--border);
-}
-.footer-disclaimer {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 16px; margin-bottom: 16px;
-}
-.footer-disclaimer strong {
-  font-size: 13px; color: var(--yellow); display: block; margin-bottom: 8px;
-}
-.footer-disclaimer p {
-  font-size: 12px; color: var(--dim); line-height: 1.6;
-}
-.footer-links {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  justify-content: center; margin-bottom: 12px;
-}
-.footer-links a {
-  color: var(--accent); font-size: 12px; text-decoration: none;
-}
-.footer-links a:hover { text-decoration: underline; }
-.footer-links span { color: var(--border); font-size: 12px; }
-.footer-meta {
-  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-  margin-bottom: 8px;
-}
-.footer-meta span {
-  font-size: 11px; color: var(--dim);
-}
-.footer-copy {
-  text-align: center; font-size: 11px; color: var(--dim);
-  padding-top: 8px; border-top: 1px solid var(--border);
-}
-
-/* 合规子页面通用样式 */
+/* ═══ Compliance Sub-pages ═══ */
 .compliance-page {
-  max-width: 800px; margin: 0 auto; padding: 24px 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 20px;
 }
+
 .compliance-page h1 {
-  font-size: 20px; margin-bottom: 16px; color: var(--accent);
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: var(--accent);
+  letter-spacing: 1px;
 }
+
 .compliance-page h2 {
-  font-size: 15px; margin: 20px 0 8px; color: var(--text);
+  font-size: 15px;
+  margin: 24px 0 10px;
+  color: var(--text-hi);
 }
+
 .compliance-page p, .compliance-page li {
-  font-size: 13px; color: var(--dim); line-height: 1.8;
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 2;
 }
+
 .compliance-page .back-link {
-  display: inline-block; margin-top: 24px;
-  color: var(--accent); text-decoration: none; font-size: 13px;
+  display: inline-block;
+  margin-top: 28px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
 }
+
 .compliance-page .back-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 <div class="container">
+  <!-- ═══════ Header ═══════ -->
   <div class="header">
     <div class="header-left">
-      <div class="logo">📡</div>
-      <div class="title">
+      <div class="logo-wrap">
+        <div class="logo-ring spin"></div>
+        <div class="logo-core">📡</div>
+      </div>
+      <div class="title-block">
         <h1>小散研究院</h1>
-        <span>XIAOSAN LAB · 散户资金 × 散户/主力比例 实时扫描</span>
+        <div class="subtitle">XIAO SAN LAB · RETAIL FLOW RADAR</div>
       </div>
     </div>
     <div class="header-right">
       <div class="status-badge" id="statusBadge">
         <span class="status-dot"></span><span id="statusText">加载中</span>
       </div>
-      <span class="update-time" id="updateTime">更新时间：--</span>
-      <button class="btn" onclick="fetchData()">🔄 刷新</button>
-      <div class="toggle"><span>自动(60s)</span>
+      <span class="update-time" id="updateTime">--:--</span>
+      <button class="btn-refresh" onclick="fetchData()">刷新</button>
+      <div class="toggle"><span>AUTO 60s</span>
         <div class="toggle-switch" id="autoToggle" onclick="toggleAuto()"></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════ 实时数据区 ═══════ -->
+  <!-- ═══════ Realtime Section ═══════ -->
   <div class="section-header">
-    <h2>📊 散户资金实时监控</h2>
+    <h2>散户资金实时监控</h2>
     <span class="freq-tag realtime"><span class="freq-tag-dot"></span>实时 · 每10分钟更新</span>
   </div>
 
-  <!-- 四维KPI -->
+  <!-- KPI Cards -->
   <div class="kpi-grid">
     <div class="kpi-card inflow">
-      <div class="kpi-label"><span>💰 散户流入资金</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
+      <div class="kpi-label">
+        <span>散户流入资金</span>
+        <span class="kpi-label-tag" style="color:var(--green)">LIVE</span>
+      </div>
       <div class="kpi-value" id="kpiInflowAmount">--</div>
       <div class="kpi-sub">流入个股 <span class="num" id="kpiInflowCount">--</span> 只</div>
     </div>
     <div class="kpi-card outflow">
-      <div class="kpi-label"><span>💸 散户流出资金</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
+      <div class="kpi-label">
+        <span>散户流出资金</span>
+        <span class="kpi-label-tag" style="color:var(--red)">LIVE</span>
+      </div>
       <div class="kpi-value" id="kpiOutflowAmount">--</div>
       <div class="kpi-sub">流出个股 <span class="num" id="kpiOutflowCount">--</span> 只</div>
     </div>
     <div class="kpi-card net">
-      <div class="kpi-label"><span>⚖️ 散户净流入</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
+      <div class="kpi-label">
+        <span>散户净流入</span>
+        <span class="kpi-label-tag" style="color:var(--accent)">LIVE</span>
+      </div>
       <div class="kpi-value" id="kpiNetAmount">--</div>
-      <div class="kpi-sub">净流入个股 <span class="num" id="kpiNetCount">--</span> 只</div>
+      <div class="kpi-sub">净流入个股 <span class="num" id="kpiNetCount">--</span> 只 / 共 <span class="num" id="kpiTotal">--</span> 只</div>
     </div>
     <div class="kpi-card ratio">
-      <div class="kpi-label"><span>🎯 散户/主力资金比</span><span class="freq-tag realtime" style="font-size:9px;padding:1px 5px;">实时</span></div>
+      <div class="kpi-label">
+        <span>散户/主力资金比</span>
+        <span class="kpi-label-tag" style="color:var(--purple)">LIVE</span>
+      </div>
       <div class="kpi-value" id="kpiRatio">--</div>
       <div class="kpi-sub">散户占比 <span class="num" id="kpiRatioNum">--</span>%</div>
       <div class="ratio-bar">
@@ -290,67 +949,78 @@ tr:hover { background: rgba(255,255,255,0.03); }
     </div>
   </div>
 
-  <!-- 主Tab -->
+  <!-- Main Tabs -->
   <div class="tab-bar">
-    <div class="tab active" onclick="switchTab('flow')">📊 资金维度</div>
-    <div class="tab" onclick="switchTab('ratio')">🎯 占比维度</div>
+    <div class="tab active" onclick="switchTab('flow')">资金维度</div>
+    <div class="tab" onclick="switchTab('ratio')">占比维度</div>
   </div>
 
-  <!-- 子Tab -->
+  <!-- Sub Tabs -->
   <div class="subtab-bar" id="subtabBar">
     <div class="subtab active" onclick="switchSub('inflow')">流入TOP</div>
     <div class="subtab" onclick="switchSub('outflow')">流出TOP</div>
     <div class="subtab" onclick="switchSub('net')">净流入TOP</div>
   </div>
 
-  <!-- 数据内容 -->
+  <!-- Search -->
+  <div class="search-bar">
+    <input class="search-input" id="searchInput" placeholder="搜索股票代码或名称..." oninput="filterTable()">
+  </div>
+
+  <!-- Content -->
   <div class="content">
     <div class="chart-box">
       <h3 id="chartTitle">散户流入TOP</h3>
-      <div id="chartArea"></div>
+      <div id="chartArea">
+        <div class="skeleton skeleton-bar" style="width:80%"></div>
+        <div class="skeleton skeleton-bar" style="width:60%"></div>
+        <div class="skeleton skeleton-bar" style="width:70%"></div>
+      </div>
     </div>
     <div class="table-box">
-      <table id="dataTable">
+      <table>
         <thead id="tableHead"></thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="tableBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--dim);padding:40px;">加载中...</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
   <div class="section-divider"></div>
 
-  <!-- ═══════ 季度数据区 ═══════ -->
+  <!-- ═══════ Quarterly Section ═══════ -->
   <div class="section-header">
-    <h2>👥 股东户数变化</h2>
-    <span class="freq-tag quarterly"><span class="freq-tag-dot"></span>季度披露 · 来源于上市公司定期公告</span>
+    <h2>股东户数变化</h2>
+    <span class="freq-tag quarterly"><span class="freq-tag-dot"></span>季度披露 · 上市公司定期公告</span>
   </div>
 
-  <!-- 股东户数 -->
-  <div class="shareholder-section">
-    <h3 style="display:none">户数变化</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div>
-        <h4 style="font-size:12px;color:var(--dim);margin-bottom:8px;">户数增幅 TOP</h4>
-        <table style="width:100%;font-size:11px;">
-          <thead><tr><th style="text-align:left">股票</th><th>最新户数</th><th>增幅</th><th>区间</th></tr></thead>
-          <tbody id="holderIncreaseBody"></tbody>
-        </table>
-      </div>
-      <div>
-        <h4 style="font-size:12px;color:var(--dim);margin-bottom:8px;">户数减少 TOP</h4>
-        <table style="width:100%;font-size:11px;">
-          <thead><tr><th style="text-align:left">股票</th><th>最新户数</th><th>减幅</th><th>区间</th></tr></thead>
-          <tbody id="holderDecreaseBody"></tbody>
-        </table>
-      </div>
+  <div class="shareholder-grid">
+    <div class="sh-card">
+      <h4><span class="sh-icon up"></span>户数增幅 TOP</h4>
+      <table class="sh-table">
+        <thead><tr><th style="text-align:left">股票</th><th>户数</th><th>增幅</th><th>区间</th></tr></thead>
+        <tbody id="holderIncreaseBody">
+          <tr><td colspan="4" style="text-align:center;color:var(--dim)">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sh-card">
+      <h4><span class="sh-icon down"></span>户数减少 TOP</h4>
+      <table class="sh-table">
+        <thead><tr><th style="text-align:left">股票</th><th>户数</th><th>减幅</th><th>区间</th></tr></thead>
+        <tbody id="holderDecreaseBody">
+          <tr><td colspan="4" style="text-align:center;color:var(--dim)">加载中...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- 合规页脚 -->
+  <!-- ═══════ Compliance Footer ═══════ -->
   <footer class="compliance-footer">
     <div class="footer-disclaimer">
       <strong>风险提示与免责声明</strong>
-      <p>本站数据来源于东方财富、新浪财经等公开渠道，仅供参考，不构成任何投资建议。投资者应独立判断投资决策，自行承担投资风险。本站不对任何因使用本站数据而导致的损失承担责任。</p>
+      <p>本站数据来源于新浪财经、东方财富数据中心等公开渠道，仅供参考，不构成任何投资建议。投资者应独立判断投资决策，自行承担投资风险。本站不对任何因使用本站数据而导致的损失承担责任。</p>
     </div>
     <div class="footer-links">
       <a href="about.html">关于我们</a>
@@ -362,12 +1032,12 @@ tr:hover { background: rgba(255,255,255,0.03); }
       <a href="disclaimer.html">免责声明</a>
     </div>
     <div class="footer-meta">
-      <span>数据来源：东方财富 / 新浪财经（公开API）</span>
-      <span>本站不提供证券投资咨询服务</span>
-      <span>非营利性个人项目 | 未进行ICP备案（部署于境外服务器）</span>
+      <span>DATA: SINA / EASTMONEY-DC</span>
+      <span>非投资咨询</span>
+      <span>非营利性 | HK SERVER</span>
     </div>
     <div class="footer-copy">
-      <span>© 2026 小散研究院 XiaoSan Lab. All rights reserved.</span>
+      &copy; 2026 XIAOSAN LAB · ALL RIGHTS RESERVED
     </div>
   </footer>
 </div>
@@ -378,6 +1048,7 @@ let currentTab = 'flow';
 let currentSub = 'inflow';
 let autoTimer = null;
 let sortCol = null, sortAsc = false;
+let searchText = '';
 
 const STATUS_MAP = {
   live: { cls: 'status-live', text: '实时数据' },
@@ -400,17 +1071,19 @@ function render() {
   const ov = allData.overview;
   const status = STATUS_MAP[ov.data_status] || STATUS_MAP.static;
 
-  document.getElementById('statusBadge').className = 'status-badge ' + status.cls;
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'status-badge ' + status.cls;
   document.getElementById('statusText').textContent = status.text;
-  document.getElementById('updateTime').textContent = '更新时间：' + allData.last_updated;
+  document.getElementById('updateTime').textContent = allData.last_updated || '--:--';
 
   document.getElementById('kpiInflowAmount').textContent = (ov.inflow_amount||0).toFixed(2) + '亿';
-  document.getElementById('kpiInflowCount').textContent = ov.inflow_count;
+  document.getElementById('kpiInflowCount').textContent = ov.inflow_count || 0;
   document.getElementById('kpiOutflowAmount').textContent = (ov.outflow_amount||0).toFixed(2) + '亿';
-  document.getElementById('kpiOutflowCount').textContent = ov.outflow_count;
+  document.getElementById('kpiOutflowCount').textContent = ov.outflow_count || 0;
   const net = ov.net_amount || 0;
   document.getElementById('kpiNetAmount').textContent = (net >= 0 ? '+' : '') + net.toFixed(2) + '亿';
-  document.getElementById('kpiNetCount').textContent = ov.net_count;
+  document.getElementById('kpiNetCount').textContent = ov.net_count || 0;
+  document.getElementById('kpiTotal').textContent = ov.total_stocks || 0;
 
   const ratio = ov.overall_retail_ratio || 0;
   document.getElementById('kpiRatio').textContent = ratio.toFixed(1) + '%';
@@ -460,7 +1133,7 @@ function renderChart(stocks, type, color) {
     return Math.abs(s.retail_ratio || 0);
   }), 0.01);
   let html = '';
-  for (const s of stocks.slice(0, 25)) {
+  for (const s of stocks.slice(0, 30)) {
     let val, displayVal, valColor, barColor;
     if (type === 'inflow') {
       val = s.retail_inflow || 0; displayVal = val.toFixed(2) + '亿'; valColor = 'var(--green)'; barColor = 'green';
@@ -487,30 +1160,34 @@ function renderTable(stocks) {
   let headHtml = '<tr>' +
     '<th onclick="sortTable(\'code\')">代码</th>' +
     '<th onclick="sortTable(\'name\')">名称</th>' +
-    '<th onclick="sortTable(\'retail_inflow\')">流入(亿)</th>' +
-    '<th onclick="sortTable(\'retail_outflow\')">流出(亿)</th>' +
-    '<th onclick="sortTable(\'retail_net\')">净流入(亿)</th>' +
-    '<th onclick="sortTable(\'main_net\')">主力净额(亿)</th>' +
+    '<th onclick="sortTable(\'retail_net\')">净流入</th>' +
+    '<th onclick="sortTable(\'main_net\')">主力净额</th>' +
     '<th onclick="sortTable(\'retail_ratio\')">散户占比</th>' +
     '<th onclick="sortTable(\'price\')">价格</th>' +
-    '<th onclick="sortTable(\'change_pct\')">涨跌%</th>' +
+    '<th onclick="sortTable(\'change_pct\')">涨跌</th>' +
     '<th onclick="sortTable(\'sector\')">行业</th>' +
   '</tr>';
 
+  let displayStocks = stocks;
+  if (searchText) {
+    const q = searchText.toLowerCase();
+    displayStocks = stocks.filter(s =>
+      (s.code||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q)
+    );
+  }
+
   let bodyHtml = '';
-  for (const s of stocks) {
+  for (const s of displayStocks) {
     const cls = s.change_pct > 0 ? 'price-up' : s.change_pct < 0 ? 'price-down' : '';
     const ratio = s.retail_ratio || 0;
     const ratioColor = ratio > 0 ? 'var(--purple)' : 'var(--blue)';
     const ratioBarWidth = Math.min(Math.abs(ratio), 100);
     const ratioBarColor = ratio > 0 ? 'var(--purple)' : 'var(--blue)';
     bodyHtml += '<tr>' +
-      '<td style="color:var(--dim)">' + s.code + '</td>' +
-      '<td style="font-weight:600">' + s.name + '</td>' +
-      '<td style="color:var(--green)">' + (s.retail_inflow||0).toFixed(2) + '</td>' +
-      '<td style="color:var(--red)">' + (s.retail_outflow||0).toFixed(2) + '</td>' +
+      '<td class="code-cell">' + s.code + '</td>' +
+      '<td class="name-cell">' + s.name + '</td>' +
       '<td style="color:' + (s.retail_net >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:600">' + (s.retail_net >= 0 ? '+' : '') + (s.retail_net||0).toFixed(2) + '</td>' +
-      '<td style="color:' + ((s.main_net||0) >= 0 ? 'var(--green)' : 'var(--red)') + '">' + ((s.main_net||0) >= 0 ? '+' : '') + (s.main_net||0).toFixed(2) + '</td>' +
+      '<td style="color:' + ((s.main_net||0) >= 0 ? 'var(--red)' : 'var(--green)') + '">' + ((s.main_net||0) >= 0 ? '+' : '') + (s.main_net||0).toFixed(2) + '</td>' +
       '<td><div class="ratio-cell"><span style="color:' + ratioColor + ';font-weight:600">' + ratio.toFixed(1) + '%</span>' +
         '<span class="mini-bar"><span class="mini-fill" style="width:' + ratioBarWidth + '%;background:' + ratioBarColor + '"></span></span></div></td>' +
       '<td>' + (s.price > 0 ? s.price.toFixed(2) : '--') + '</td>' +
@@ -519,23 +1196,35 @@ function renderTable(stocks) {
     '</tr>';
   }
   document.getElementById('tableHead').innerHTML = headHtml;
-  document.getElementById('tableBody').innerHTML = bodyHtml;
+  document.getElementById('tableBody').innerHTML = bodyHtml || '<tr><td colspan="8" style="text-align:center;color:var(--dim)">无匹配结果</td></tr>';
 }
 
 function renderShareholders() {
   if (!allData?.shareholder_count) return;
-  const increase = allData.shareholder_count.filter(s => s.change_pct > 0).sort((a,b) => b.change_pct - a.change_pct);
-  const decrease = allData.shareholder_count.filter(s => s.change_pct < 0).sort((a,b) => a.change_pct - b.change_pct);
+  const increase = allData.shareholder_count.filter(s => s.change_pct > 0).sort((a,b) => b.change_pct - a.change_pct).slice(0, 20);
+  const decrease = allData.shareholder_count.filter(s => s.change_pct < 0).sort((a,b) => a.change_pct - b.change_pct).slice(0, 20);
   let html = '';
   for (const s of increase) {
-    html += '<tr><td style="font-weight:600">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--red);text-align:right">+' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
+    html += '<tr><td class="name-cell">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--red);text-align:right">+' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
   }
-  document.getElementById('holderIncreaseBody').innerHTML = html;
+  document.getElementById('holderIncreaseBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--dim)">暂无数据</td></tr>';
   html = '';
   for (const s of decrease) {
-    html += '<tr><td style="font-weight:600">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--green);text-align:right">' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
+    html += '<tr><td class="name-cell">' + s.name + '</td><td style="text-align:right">' + (s.current/10000).toFixed(1) + '万</td><td style="color:var(--green);text-align:right">' + s.change_pct.toFixed(1) + '%</td><td style="color:var(--dim)">' + s.period + '</td></tr>';
   }
-  document.getElementById('holderDecreaseBody').innerHTML = html;
+  document.getElementById('holderDecreaseBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:var(--dim)">暂无数据</td></tr>';
+}
+
+function filterTable() {
+  searchText = document.getElementById('searchInput').value.trim();
+  if (!allData?.retail_flow) return;
+  let stocks = [...allData.retail_flow];
+  if (currentSub === 'inflow') stocks.sort((a,b) => (b.retail_inflow||0) - (a.retail_inflow||0)).slice(0, 30);
+  else if (currentSub === 'outflow') stocks.sort((a,b) => (b.retail_outflow||0) - (a.retail_outflow||0)).slice(0, 30);
+  else if (currentSub === 'net') stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
+  else if (currentSub === 'ratio_dominant') stocks = stocks.filter(s => s.retail_ratio > 0).sort((a,b) => (b.retail_ratio||0) - (a.retail_ratio||0));
+  else if (currentSub === 'main_dominant') stocks = stocks.filter(s => s.retail_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.retail_ratio||0) - (b.retail_ratio||0));
+  renderTable(stocks.slice(0, 30));
 }
 
 const TAB_SUBTABS = {
