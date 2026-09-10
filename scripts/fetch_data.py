@@ -20,6 +20,14 @@ EASTMONEY_HEADERS = {
     "Referer": "https://data.eastmoney.com/",
 }
 
+# 东方财富 push2 请求头（模拟浏览器）
+EM_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Referer": "https://data.eastmoney.com/bkzj/hy.html",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+}
+
 
 def load_cache():
     try:
@@ -72,58 +80,77 @@ def to_float(val):
         return 0.0
 
 
+def _fetch_page(session, base_url, params):
+    """请求单页数据，失败时输出详细诊断信息"""
+    resp = session.get(base_url + "/api/qt/clist/get", params=params, headers=EM_HEADERS, timeout=15)
+    resp.encoding = "utf-8"
+    if resp.status_code != 200:
+        print(f"  ⚠️ HTTP {resp.status_code} 来自 {base_url}，响应头200字节: {resp.text[:200]}")
+        resp.raise_for_status()
+    data = resp.json()
+    if not isinstance(data, dict) or data.get("data") is None:
+        print(f"  ⚠️ {base_url} 返回非数据内容: {str(data)[:200]}")
+        raise ValueError("API返回无数据（可能被反爬拦截）")
+    return data
+
+
 def fetch_from_akshare():
-    """东方财富 push2 API - 四档完整数据（curl已验证香港可达）"""
+    """东方财富 push2 API - 四档完整数据
+    多域名容灾：push2 主站 / push2delay 延迟镜像（主站节点故障时自动切换）
+    """
     print("🔍 [数据源] 东方财富 push2 API（四档资金流）...")
 
-    EM_HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://data.eastmoney.com/bkzj/hy.html",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "zh-CN,zh;q=0.9",
-    }
+    # 域名按优先级排列：主站 -> 延迟行情镜像
+    BASE_URLS = [
+        "https://push2.eastmoney.com",
+        "https://push2delay.eastmoney.com",
+    ]
 
     all_stocks = []
+    session = requests.Session()
 
     for attempt in range(3):
-        try:
-            all_stocks = []
-            page = 1
-            total_pages = 1
-            while page <= total_pages:
-                url = "https://push2.eastmoney.com/api/qt/clist/get"
-                params = {
-                    "pn": page,
-                    "pz": 5000,
-                    "po": 1,
-                    "np": 1,
-                    "fltt": 2,
-                    "invt": 2,
-                    "fid": "f62",
-                    "fs": "m:0 t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
-                    "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
-                }
-                resp = requests.get(url, params=params, headers=EM_HEADERS, timeout=15)
-                resp.encoding = "utf-8"
-                data = resp.json()
-                if data.get("data") is None:
-                    break
-                total = data["data"].get("total", 0)
-                total_pages = (total + 4999) // 5000
-                items = data["data"].get("diff", [])
-                all_stocks.extend(items)
-                print(f"  📄 第{page}/{total_pages}页: {len(items)} 条")
-                page += 1
+        for base_url in BASE_URLS:
+            try:
+                all_stocks = []
+                page = 1
+                total_pages = 1
+                while page <= total_pages:
+                    params = {
+                        "pn": page,
+                        "pz": 5000,
+                        "po": 1,
+                        "np": 1,
+                        "fltt": 2,
+                        "invt": 2,
+                        "fid": "f62",
+                        "fs": "m:0 t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
+                        "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
+                    }
+                    data = _fetch_page(session, base_url, params)
+                    total = data["data"].get("total", 0)
+                    items = data["data"].get("diff", [])
+                    all_stocks.extend(items)
+                    # 不同域名单页上限不同（push2=5000，push2delay=100），按实际返回条数动态分页
+                    if page == 1 and items:
+                        actual_pz = len(items)
+                        total_pages = (total + actual_pz - 1) // actual_pz
+                    print(f"  📄 [{base_url.split('//')[1].split('.')[0]}] 第{page}/{total_pages}页: {len(items)} 条")
+                    page += 1
+                    if not items:
+                        break
 
-            print(f"  📊 东方财富返回 {len(all_stocks)} 条")
+                if all_stocks:
+                    print(f"  📊 东方财富返回 {len(all_stocks)} 条（via {base_url.split('//')[1]}）")
+                    break
+            except Exception as e:
+                print(f"  ⚠️ {base_url} 第{attempt+1}/3次获取失败: {e}")
+        if all_stocks:
             break
-        except Exception as e:
-            print(f"  ⚠️ 第{attempt+1}/3次获取失败: {e}")
-            if attempt == 2:
-                print("  📦 东方财富不可用，尝试缓存...")
-                return []
-            time.sleep(2)
-    else:
+        time.sleep(2)
+
+    if not all_stocks:
+        print("  📦 push2 全部域名不可用，尝试缓存...")
         return []
 
     # 字段映射: f62=主力净额, f184=主力净占比, f66=超大单净额, f69=超大单净占比,
