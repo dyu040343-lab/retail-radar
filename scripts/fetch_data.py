@@ -90,9 +90,9 @@ def fetch_from_eastmoney():
     """东方财富实时API - 全市场扫描，分页获取所有A股"""
     print("🔍 [数据源1] 东方财富API（全市场）...")
     stocks = []
+    all_codes_cache = []
     try:
         url = "https://push2.eastmoney.com/api/qt/clist/get"
-        # 沪深全A股：沪市主板+科创板 + 深市主板+创业板+中小板
         markets = [
             ("沪市", "m:1+t:2,m:1+t:23"),
             ("深市", "m:0+t:6,m:0+t:80,m:0+t:13,m:0+t:81"),
@@ -108,56 +108,77 @@ def fetch_from_eastmoney():
                     "fields": "f2,f3,f12,f14,f62,f84,f78",
                     "_": str(int(time.time() * 1000))
                 }
+                resp = None
+                for retry in range(3):
+                    try:
+                        resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
+                        if resp.status_code == 200 and resp.text.strip():
+                            break
+                        print(f"  ⚠️ {market_name} p{page} 重试{retry+1}/3: status={resp.status_code}")
+                        time.sleep(2)
+                    except Exception as e:
+                        print(f"  ⚠️ {market_name} p{page} 重试{retry+1}/3: {e}")
+                        time.sleep(2)
+                if not resp or resp.status_code != 200 or not resp.text.strip():
+                    print(f"  ❌ {market_name} 3次重试均失败")
+                    break
                 try:
-                    resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
-                    if resp.status_code == 200 and resp.text.strip():
-                        data = resp.json()
-                        diff = data.get("data", {}).get("diff", [])
-                        total = data.get("data", {}).get("total", 0)
-                        if not diff:
-                            break
-                        for item in diff:
-                            code = item.get("f12", "")
-                            name = item.get("f14", "")
-                            price = item.get("f2", 0)
-                            change_pct = item.get("f3", 0)
-                            small_net = item.get("f84", 0) or 0
-                            medium_net = item.get("f78", 0) or 0
-                            retail_net = (small_net + medium_net) / 100000000
-                            main_net = item.get("f62", 0) or 0
-                            main_net_yi = round(main_net / 100000000, 2)
-
-                            retail_inflow = max(retail_net, 0)
-                            retail_outflow = max(-retail_net, 0)
-
-                            total_abs = abs(retail_net) + abs(main_net_yi)
-                            retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
-                            retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
-                            stocks.append({
-                                "code": code, "name": name,
-                                "price": round(price, 2) if isinstance(price, (int, float)) else 0,
-                                "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
-                                "retail_inflow": round(retail_inflow, 2),
-                                "retail_outflow": round(retail_outflow, 2),
-                                "retail_net": round(retail_net, 2),
-                                "main_net": main_net_yi,
-                                "retail_ratio": retail_ratio,
-                                "retail_share": retail_share,
-                                "sector": guess_sector(name, code),
-                                "source": "eastmoney",
-                            })
-                        if len(diff) < 100:
-                            break
-                        page += 1
-                    else:
-                        print(f"  ⚠️ {market_name} p{page}: status={resp.status_code}")
+                    data = resp.json()
+                    diff = data.get("data", {}).get("diff", [])
+                    total = data.get("data", {}).get("total", 0)
+                    if not diff:
                         break
+                    for item in diff:
+                        code = item.get("f12", "")
+                        name = item.get("f14", "")
+                        price = item.get("f2", 0)
+                        change_pct = item.get("f3", 0)
+                        small_net = item.get("f84", 0) or 0
+                        medium_net = item.get("f78", 0) or 0
+                        retail_net = (small_net + medium_net) / 100000000
+                        main_net = item.get("f62", 0) or 0
+                        main_net_yi = round(main_net / 100000000, 2)
+
+                        retail_inflow = max(retail_net, 0)
+                        retail_outflow = max(-retail_net, 0)
+
+                        total_abs = abs(retail_net) + abs(main_net_yi)
+                        retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+                        retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
+                        stocks.append({
+                            "code": code, "name": name,
+                            "price": round(price, 2) if isinstance(price, (int, float)) else 0,
+                            "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
+                            "retail_inflow": round(retail_inflow, 2),
+                            "retail_outflow": round(retail_outflow, 2),
+                            "retail_net": round(retail_net, 2),
+                            "main_net": main_net_yi,
+                            "retail_ratio": retail_ratio,
+                            "retail_share": retail_share,
+                            "sector": guess_sector(name, code),
+                            "source": "eastmoney",
+                        })
+                        prefix = "sh" if code.startswith("6") else "sz"
+                        all_codes_cache.append({"daima": f"{prefix}{code}", "code": code, "name": name})
+                    if len(diff) < 100:
+                        break
+                    page += 1
                 except Exception as e:
-                    print(f"  ⚠️ {market_name} p{page}失败: {e}")
+                    print(f"  ⚠️ {market_name} p{page}解析失败: {e}")
                     break
             print(f"  ✅ {market_name}: 累计 {len(stocks)} 条")
     except Exception as e:
         print(f"  ⚠️ 东方财富不可用: {e}")
+
+    # 缓存代码列表供新浪备用
+    if all_codes_cache:
+        try:
+            cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+            with open(os.path.join(cache_dir, "stock_codes_cache.json"), "w", encoding="utf-8") as f:
+                json.dump(all_codes_cache, f, ensure_ascii=False)
+            print(f"  💾 代码列表已缓存 ({len(all_codes_cache)} 只)")
+        except:
+            pass
 
     if stocks:
         print(f"  ✅ 东方财富全市场共 {len(stocks)} 条 [实时]")
@@ -213,8 +234,20 @@ def fetch_from_sina():
         print(f"  ⚠️ 获取代码列表失败: {e}")
 
     if not all_codes:
-        print("  ⚠️ 东方财富不可用，无法获取全市场代码列表")
-        print("  💡 如果东方财富恢复，新浪全市场也可用")
+        # 尝试加载缓存的代码列表
+        cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        code_cache_path = os.path.join(cache_dir, "stock_codes_cache.json")
+        if os.path.exists(code_cache_path):
+            try:
+                with open(code_cache_path, "r", encoding="utf-8") as f:
+                    cached_codes = json.load(f)
+                all_codes = [(c["daima"], c["code"], c["name"]) for c in cached_codes]
+                print(f"  📋 使用缓存代码列表 ({len(all_codes)} 只)")
+            except:
+                pass
+
+    if not all_codes:
+        print("  ⚠️ 无法获取代码列表（东财不可用且无缓存）")
         return stocks
 
     # 第二步：用新浪批量查询（每批50只）
