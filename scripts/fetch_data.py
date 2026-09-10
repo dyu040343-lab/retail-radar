@@ -165,67 +165,123 @@ def fetch_from_eastmoney():
 
 
 def fetch_from_sina():
-    """新浪财经API - 收盘后也可获取当日数据，含流入流出明细"""
-    print("🔍 [数据源2] 新浪财经API...")
+    """新浪财经API - 全市场批量获取，含流入流出明细"""
+    print("🔍 [数据源2] 新浪财经API（全市场）...")
     stocks = []
     session = requests.Session()
     session.headers.update(SINA_HEADERS)
 
-    for code, name, market in WATCH_LIST:
+    # 第一步：从东方财富获取全A股代码列表（仅代码，不用资金数据）
+    # 如果东方财富不可用，则跳过新浪全市场（无法获取代码列表）
+    all_codes = []
+    try:
+        url = "https://push2.eastmoney.com/api/qt/clist/get"
+        markets = [
+            ("沪市", "m:1+t:2,m:1+t:23"),
+            ("深市", "m:0+t:6,m:0+t:80,m:0+t:13,m:0+t:81"),
+        ]
+        for market_name, fs in markets:
+            page = 1
+            while True:
+                params = {
+                    "pn": str(page), "pz": "100", "po": "1", "np": "1",
+                    "ut": "b2884a393a59ad64002292a3e90d46a5",
+                    "fltt": "2", "invt": "2", "fid": "f12",
+                    "fs": fs,
+                    "fields": "f12,f14",
+                    "_": str(int(time.time() * 1000))
+                }
+                resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
+                if resp.status_code == 200 and resp.text.strip():
+                    data = resp.json()
+                    diff = data.get("data", {}).get("diff", [])
+                    if not diff:
+                        break
+                    for item in diff:
+                        code = item.get("f12", "")
+                        name = item.get("f14", "")
+                        if code and name:
+                            prefix = "sh" if code.startswith("6") else "sz"
+                            all_codes.append((f"{prefix}{code}", code, name))
+                    if len(diff) < 100:
+                        break
+                    page += 1
+                else:
+                    break
+            print(f"  📋 {market_name}: 获取代码 {len(all_codes)} 个")
+    except Exception as e:
+        print(f"  ⚠️ 获取代码列表失败: {e}")
+
+    if not all_codes:
+        print("  ⚠️ 东方财富不可用，无法获取全市场代码列表")
+        print("  💡 如果东方财富恢复，新浪全市场也可用")
+        return stocks
+
+    # 第二步：用新浪批量查询（每批50只）
+    batch_size = 50
+    total_batches = (len(all_codes) + batch_size - 1) // batch_size
+    print(f"  📦 共 {len(all_codes)} 只，分 {total_batches} 批查询...")
+
+    for i in range(0, len(all_codes), batch_size):
+        batch = all_codes[i:i+batch_size]
+        daima_str = ",".join([c[0] for c in batch])
         try:
-            daima = f"{market}{code}"
-            url = f"http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssi_ssfx_flzjtj?format=json&daima={daima}"
-            resp = session.get(url, timeout=8)
+            url = f"http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssi_ssfx_flzjtj?daima={daima_str}&format=json"
+            resp = session.get(url, timeout=15)
             if resp.status_code == 200 and resp.text.strip():
                 data = resp.json()
                 if not data:
                     continue
-                item = data[0] if isinstance(data, list) else data
+                if isinstance(data, dict):
+                    data = [data]
 
-                # 新浪字段：r0=超大单, r1=大单, r2=中单, r3=小单
-                # rX_in=流入, rX_out=流出, rX=总额(流入+流出)，单位：元
-                r0_in = float(item.get("r0_in", 0) or 0)
-                r0_out = float(item.get("r0_out", 0) or 0)
-                r1_in = float(item.get("r1_in", 0) or 0)
-                r1_out = float(item.get("r1_out", 0) or 0)
-                r2_in = float(item.get("r2_in", 0) or 0)
-                r2_out = float(item.get("r2_out", 0) or 0)
-                r3_in = float(item.get("r3_in", 0) or 0)
-                r3_out = float(item.get("r3_out", 0) or 0)
+                for item in data:
+                    symbol = item.get("symbol", "")
+                    name = item.get("name", "")
+                    code = symbol[2:] if len(symbol) > 2 else symbol
 
-                # 散户 = 中单 + 小单
-                retail_inflow = (r2_in + r3_in) / 100000000
-                retail_outflow = (r2_out + r3_out) / 100000000
-                retail_net = retail_inflow - retail_outflow
+                    r0_in = float(item.get("r0_in", 0) or 0)
+                    r0_out = float(item.get("r0_out", 0) or 0)
+                    r1_in = float(item.get("r1_in", 0) or 0)
+                    r1_out = float(item.get("r1_out", 0) or 0)
+                    r2_in = float(item.get("r2_in", 0) or 0)
+                    r2_out = float(item.get("r2_out", 0) or 0)
+                    r3_in = float(item.get("r3_in", 0) or 0)
+                    r3_out = float(item.get("r3_out", 0) or 0)
 
-                # 主力 = 超大单 + 大单（净额 = 流入 - 流出）
-                main_net = ((r0_in - r0_out) + (r1_in - r1_out)) / 100000000
+                    retail_inflow = (r2_in + r3_in) / 100000000
+                    retail_outflow = (r2_out + r3_out) / 100000000
+                    retail_net = retail_inflow - retail_outflow
+                    main_net = ((r0_in - r0_out) + (r1_in - r1_out)) / 100000000
 
-                price = float(item.get("trade", 0) or 0)
-                change_pct = float(item.get("changeratio", 0) or 0) * 100
+                    price = float(item.get("trade", 0) or 0)
+                    change_pct = float(item.get("changeratio", 0) or 0) * 100
 
-                total_abs = abs(retail_net) + abs(main_net)
-                retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
-                retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
-                stocks.append({
-                    "code": code, "name": name,
-                    "price": round(price, 2) if price else 0,
-                    "change_pct": round(change_pct, 2) if change_pct else 0,
-                    "retail_inflow": round(retail_inflow, 2),
-                    "retail_outflow": round(retail_outflow, 2),
-                    "retail_net": round(retail_net, 2),
-                    "main_net": round(main_net, 2),
-                    "retail_ratio": retail_ratio,
-                    "retail_share": retail_share,
-                    "sector": guess_sector(name, code),
-                    "source": "sina",
-                })
+                    total_abs = abs(retail_net) + abs(main_net)
+                    retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+                    retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
+                    stocks.append({
+                        "code": code, "name": name,
+                        "price": round(price, 2) if price else 0,
+                        "change_pct": round(change_pct, 2) if change_pct else 0,
+                        "retail_inflow": round(retail_inflow, 2),
+                        "retail_outflow": round(retail_outflow, 2),
+                        "retail_net": round(retail_net, 2),
+                        "main_net": round(main_net, 2),
+                        "retail_ratio": retail_ratio,
+                        "retail_share": retail_share,
+                        "sector": guess_sector(name, code),
+                        "source": "sina",
+                    })
         except:
             pass
-        time.sleep(0.08)
+
+        if (i // batch_size + 1) % 10 == 0:
+            print(f"  进度: {i // batch_size + 1}/{total_batches} 批, 累计 {len(stocks)} 条")
+        time.sleep(0.1)
 
     if stocks:
-        print(f"  ✅ 新浪共 {len(stocks)} 条 [收盘/实时]")
+        print(f"  ✅ 新浪全市场共 {len(stocks)} 条 [收盘/实时]")
     return stocks
 
 
@@ -234,15 +290,19 @@ def fetch_retail_money_flow():
     print("📡 小散研究院 - 数据抓取中...")
     print("=" * 50)
 
-    stocks = fetch_from_eastmoney()
-    if stocks:
-        return stocks, "live"
+    # 优先东方财富全市场，失败则整条切到新浪全市场，绝不混用
+    em_stocks = fetch_from_eastmoney()
+    if em_stocks and len(em_stocks) > 100:
+        print(f"  ✅ 使用东方财富全市场数据（{len(em_stocks)} 条），数据源一致")
+        return em_stocks, "live"
 
-    stocks = fetch_from_sina()
-    if stocks:
-        return stocks, "live"
+    print("  ⚠️ 东方财富数据不足，整条切换到新浪财经全市场...")
+    sina_stocks = fetch_from_sina()
+    if sina_stocks and len(sina_stocks) > 50:
+        print(f"  ✅ 使用新浪全市场数据（{len(sina_stocks)} 条），数据源一致")
+        return sina_stocks, "live"
 
-    print("📦 API不可用，尝试缓存...")
+    print("📦 两个API均不可用，尝试缓存...")
     cache = load_cache()
     if cache and cache.get("retail_flow"):
         cached = cache["retail_flow"]
