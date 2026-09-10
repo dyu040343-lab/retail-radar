@@ -272,19 +272,13 @@ def fetch_retail_money_flow():
     print("📡 小散研究院 - 数据抓取中...")
     print("=" * 50)
 
-    # 优先东方财富全市场，失败则整条切到新浪全市场，绝不混用
-    em_stocks = fetch_from_eastmoney()
-    if em_stocks and len(em_stocks) > 100:
-        print(f"  ✅ 使用东方财富全市场数据（{len(em_stocks)} 条），数据源一致")
-        return em_stocks, "live"
-
-    print("  ⚠️ 东方财富数据不足，整条切换到新浪财经全市场...")
+    # 只用新浪全市场批量接口
     sina_stocks = fetch_from_sina()
     if sina_stocks and len(sina_stocks) > 50:
         print(f"  ✅ 使用新浪全市场数据（{len(sina_stocks)} 条），数据源一致")
         return sina_stocks, "live"
 
-    print("📦 两个API均不可用，尝试缓存...")
+    print("📦 新浪API不可用，尝试缓存...")
     cache = load_cache()
     if cache and cache.get("retail_flow"):
         cached = cache["retail_flow"]
