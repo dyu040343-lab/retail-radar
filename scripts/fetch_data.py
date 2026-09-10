@@ -184,7 +184,8 @@ def fetch_from_akshare():
         small_net_yi = round(small_net / yi, 4)
 
         retail_net = small_net_yi
-        main_net = round(super_net_yi + large_net_yi + medium_net_yi, 4)
+        # 主力净额直接用东财官方 f62（=超大单+大单），与东财页面口径一致
+        main_net = round(to_float(item.get("f62")) / yi, 4)
 
         retail_inflow = max(retail_net, 0)
         retail_outflow = max(-retail_net, 0)
@@ -461,7 +462,7 @@ def main():
         "retail_flow": retail_flow,
         "shareholder_count": shareholder_count,
         "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "data_source": "akshare/东方财富" if data_status == "live" else ("缓存数据" if data_status == "cached" else "估算数据"),
+        "data_source": "东方财富push2接口" if data_status == "live" else ("缓存数据" if data_status == "cached" else "估算数据"),
         "data_status": data_status,
     }
 
