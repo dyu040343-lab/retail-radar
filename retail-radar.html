@@ -321,8 +321,8 @@ body::after {
 /* ═══ KPI Cards ═══ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr 1fr 1fr 1.4fr;
+  gap: 14px;
   margin-bottom: 24px;
 }
 
@@ -357,7 +357,13 @@ body::after {
 .kpi-card.inflow::before { background: linear-gradient(90deg, var(--green), transparent); }
 .kpi-card.outflow::before { background: linear-gradient(90deg, var(--red), transparent); }
 .kpi-card.net::before { background: linear-gradient(90deg, var(--accent), transparent); }
-.kpi-card.ratio::before { background: linear-gradient(90deg, var(--purple), transparent); }
+.kpi-card.dual::before { background: linear-gradient(90deg, var(--purple), var(--cyan), transparent); }
+
+.kpi-card:hover {
+  border-color: var(--border-hi);
+  transform: translateY(-2px);
+  transition: border-color 0.3s, transform 0.3s;
+}
 
 .kpi-card::after {
   content: '';
@@ -372,7 +378,7 @@ body::after {
 .kpi-card.inflow::after { background: var(--green); }
 .kpi-card.outflow::after { background: var(--red); }
 .kpi-card.net::after { background: var(--accent); }
-.kpi-card.ratio::after { background: var(--purple); }
+.kpi-card.dual::after { background: var(--purple); }
 
 .kpi-label {
   font-size: 12px;
@@ -433,6 +439,59 @@ body::after {
 
 .ratio-bar-fill.retail { background: var(--purple); }
 .ratio-bar-fill.main { background: var(--blue); }
+.ratio-bar-fill.static { background: var(--cyan); }
+
+.dual-split-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-1);
+  margin-bottom: 6px;
+  position: relative;
+}
+.dual-split-retail {
+  background: linear-gradient(90deg, var(--purple), var(--purple-dim));
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+}
+.dual-split-main {
+  background: linear-gradient(90deg, var(--blue-dim), var(--blue));
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 4px;
+}
+.dual-split-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 4px;
+  color: var(--dim);
+}
+.dual-split-labels .retail-label { color: var(--purple); }
+.dual-split-labels .main-label { color: var(--blue); }
+.dual-ratio-section { margin-top: 10px; }
+.dual-ratio-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.dual-ratio-label {
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: var(--dim); width: 50px; flex-shrink: 0;
+}
+.dual-ratio-bar {
+  flex: 1; height: 5px; background: var(--bg-1); border-radius: 3px; overflow: hidden;
+}
+.dual-ratio-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.dual-ratio-bar-fill.retail { background: linear-gradient(90deg, var(--purple), var(--purple-dim)); }
+.dual-ratio-bar-fill.static { background: linear-gradient(90deg, var(--cyan), var(--cyan-dim)); }
+.dual-ratio-val {
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums; width: 40px; text-align: right; flex-shrink: 0;
+}
 
 /* ═══ Tabs ═══ */
 .tab-bar {
@@ -936,26 +995,38 @@ td.code-cell { color: var(--dim); font-size: 10px; }
       <div class="kpi-value" id="kpiNetAmount">--</div>
       <div class="kpi-sub">共 <span class="num" id="kpiTotal">--</span> 只股票</div>
     </div>
-    <div class="kpi-card ratio">
+    <div class="kpi-card dual">
       <div class="kpi-label">
-        <span>动态占比 · 净额方向</span>
-        <span class="kpi-label-tag" style="color:var(--purple)">动态</span>
+        <span>散户/主力占比</span>
+        <span class="kpi-label-tag" style="color:var(--purple)">双维度</span>
       </div>
-      <div class="kpi-value" id="kpiDynamicRatio">--</div>
-      <div class="kpi-sub">散户净额占 <span class="num" id="kpiDynamicNum">--</span>% / 主力 <span class="num" id="kpiMainNum">--</span>%</div>
-      <div class="ratio-bar">
-        <div class="ratio-bar-fill retail" id="ratioBarDynamic" style="width:0%"></div>
+      <div class="dual-split-labels">
+        <span class="retail-label">散户</span>
+        <span class="main-label">主力</span>
       </div>
-    </div>
-    <div class="kpi-card ratio">
-      <div class="kpi-label">
-        <span>静态占比 · 成交占比</span>
-        <span class="kpi-label-tag" style="color:var(--cyan)">静态</span>
+      <div class="dual-split-bar">
+        <div class="dual-split-retail" id="dualSplitRetail" style="width:50%"></div>
+        <div class="dual-split-main" id="dualSplitMain" style="width:50%"></div>
       </div>
-      <div class="kpi-value" id="kpiStaticRatio">--</div>
-      <div class="kpi-sub">散户成交 <span class="num" id="kpiRetailAmt">--</span>亿 / 总 <span class="num" id="kpiTotalAmt">--</span>亿</div>
-      <div class="ratio-bar">
-        <div class="ratio-bar-fill main" id="ratioBarStatic" style="width:0%"></div>
+      <div class="dual-ratio-section">
+        <div class="dual-ratio-row">
+          <span class="dual-ratio-label">动态</span>
+          <div class="dual-ratio-bar">
+            <div class="dual-ratio-bar-fill retail" id="dualRatioDynamic" style="width:0%"></div>
+          </div>
+          <span class="dual-ratio-val" id="dualValDynamic">--%</span>
+        </div>
+        <div class="dual-ratio-row">
+          <span class="dual-ratio-label">静态</span>
+          <div class="dual-ratio-bar">
+            <div class="dual-ratio-bar-fill static" id="dualRatioStatic" style="width:0%"></div>
+          </div>
+          <span class="dual-ratio-val" id="dualValStatic">--%</span>
+        </div>
+      </div>
+      <div class="kpi-sub" style="margin-top:8px">
+        动态: 散户 <span class="num" id="kpiDynamicNum">--</span>% · 主力 <span class="num" id="kpiMainNum">--</span>%
+        <br>静态: 散户 <span class="num" id="kpiRetailAmt">--</span>亿 / 总 <span class="num" id="kpiTotalAmt">--</span>亿
       </div>
     </div>
   </div>
@@ -963,8 +1034,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   <!-- Main Tabs -->
   <div class="tab-bar">
     <div class="tab active" onclick="switchTab('flow')">资金维度</div>
-    <div class="tab" onclick="switchTab('dynamic')">动态占比</div>
-    <div class="tab" onclick="switchTab('static')">静态占比</div>
+    <div class="tab" onclick="switchTab('ratio')">占比维度</div>
   </div>
 
   <!-- Sub Tabs -->
@@ -1097,16 +1167,19 @@ function render() {
   document.getElementById('kpiTotal').textContent = ov.total_stocks || 0;
 
   const dr = ov.dynamic_ratio || 0;
-  document.getElementById('kpiDynamicRatio').textContent = dr.toFixed(1) + '%';
+  document.getElementById('dualValDynamic').textContent = dr.toFixed(1) + '%';
+  document.getElementById('dualRatioDynamic').style.width = Math.min(Math.abs(dr), 100) + '%';
   document.getElementById('kpiDynamicNum').textContent = dr.toFixed(1);
   document.getElementById('kpiMainNum').textContent = (100 - dr).toFixed(1);
-  document.getElementById('ratioBarDynamic').style.width = Math.min(dr, 100) + '%';
+  const drAbs = Math.min(Math.abs(dr), 100);
+  document.getElementById('dualSplitRetail').style.width = drAbs + '%';
+  document.getElementById('dualSplitMain').style.width = (100 - drAbs) + '%';
 
   const sr = ov.static_ratio || 0;
-  document.getElementById('kpiStaticRatio').textContent = sr.toFixed(1) + '%';
+  document.getElementById('dualValStatic').textContent = sr.toFixed(1) + '%';
+  document.getElementById('dualRatioStatic').style.width = Math.min(sr, 100) + '%';
   document.getElementById('kpiRetailAmt').textContent = ov.total_retail_amount || 0;
   document.getElementById('kpiTotalAmt').textContent = ov.total_market_amount || 0;
-  document.getElementById('ratioBarStatic').style.width = Math.min(sr, 100) + '%';
 
   renderFlow();
   renderShareholders();
@@ -1267,11 +1340,9 @@ const TAB_SUBTABS = {
     {key: 'outflow', label: '流出TOP'},
     {key: 'net', label: '净流入TOP'},
   ],
-  dynamic: [
+  ratio: [
     {key: 'dynamic_dominant', label: '散户主导TOP'},
     {key: 'main_dominant', label: '主力主导TOP'},
-  ],
-  static: [
     {key: 'static_high', label: '散户高占比TOP'},
     {key: 'static_low', label: '散户低占比TOP'},
   ],
@@ -1312,14 +1383,42 @@ function sortTable(col) {
   renderTable(stocks.slice(0, 50));
 }
 
+function getRefreshInterval() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 0 || day === 6) return 300000;
+  const totalMin = now.getHours() * 60 + now.getMinutes();
+  if (totalMin >= 570 && totalMin <= 900) return 60000;
+  return 300000;
+}
+
+function updateAutoLabel() {
+  const ms = getRefreshInterval();
+  const sec = ms / 1000;
+  const label = sec >= 60 ? (sec/60) + 'min' : sec + 's';
+  const el = document.querySelector('.toggle span');
+  if (el) el.textContent = 'AUTO ' + label;
+}
+
+function scheduleAutoRefresh() {
+  const ms = getRefreshInterval();
+  autoTimer = setTimeout(() => {
+    fetchData();
+    updateAutoLabel();
+    if (autoTimer) scheduleAutoRefresh();
+  }, ms);
+}
+
 function toggleAuto() {
   const el = document.getElementById('autoToggle');
-  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; el.classList.remove('on'); }
-  else { autoTimer = setInterval(fetchData, 60000); el.classList.add('on'); }
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; el.classList.remove('on'); }
+  else { el.classList.add('on'); scheduleAutoRefresh(); }
 }
 
 fetchData();
-setInterval(fetchData, 60000);
+updateAutoLabel();
+document.getElementById('autoToggle').classList.add('on');
+scheduleAutoRefresh();
 </script>
 </body>
 </html>
