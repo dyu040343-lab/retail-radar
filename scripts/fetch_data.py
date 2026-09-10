@@ -220,27 +220,35 @@ def fetch_from_sina():
                 if not code or not name:
                     continue
 
-                # 新浪字段：r0=特大单(主力), r3=散户
+                # 新浪字段：r0=特大单(主力), r3=散户, amount=总成交额
                 # 注意：此接口不含r1(大单)和r2(中单)
                 r0_in = float(item.get("r0_in", 0) or 0)
                 r0_out = float(item.get("r0_out", 0) or 0)
                 r3_in = float(item.get("r3_in", 0) or 0)
                 r3_out = float(item.get("r3_out", 0) or 0)
+                total_amount = float(item.get("amount", 0) or 0)
 
                 # 散户 = r3
                 retail_inflow = r3_in / 100000000
                 retail_outflow = r3_out / 100000000
                 retail_net = retail_inflow - retail_outflow
+                retail_total = (r3_in + r3_out) / 100000000  # 散户总成交额
 
                 # 主力 = r0（特大单）
                 main_net = (r0_in - r0_out) / 100000000
+                main_total = (r0_in + r0_out) / 100000000  # 主力总成交额
+                total_amount_yi = total_amount / 100000000  # 总成交额（亿）
 
                 price = float(item.get("trade", 0) or 0)
                 change_pct = float(item.get("changeratio", 0) or 0) * 100
 
+                # 动态占比：净额方向占比
                 total_abs = abs(retail_net) + abs(main_net)
-                retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
-                retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
+                dynamic_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+
+                # 静态占比：散户成交额占总成交额比例
+                static_ratio = round(retail_total / total_amount_yi * 100, 1) if total_amount_yi > 0.01 else 0
+
                 stocks.append({
                     "code": code, "name": name,
                     "price": round(price, 2) if price else 0,
@@ -248,9 +256,12 @@ def fetch_from_sina():
                     "retail_inflow": round(retail_inflow, 2),
                     "retail_outflow": round(retail_outflow, 2),
                     "retail_net": round(retail_net, 2),
+                    "retail_total": round(retail_total, 2),
                     "main_net": round(main_net, 2),
-                    "retail_ratio": retail_ratio,
-                    "retail_share": retail_share,
+                    "main_total": round(main_total, 2),
+                    "total_amount": round(total_amount_yi, 2),
+                    "dynamic_ratio": dynamic_ratio,
+                    "static_ratio": static_ratio,
                     "sector": guess_sector(name, code),
                     "source": "sina",
                 })
@@ -463,23 +474,31 @@ def _fallback_shareholder_data():
 
 def calc_overview(stocks):
     """计算KPI"""
-    inflow_stocks = [s for s in stocks if s["retail_net"] > 0]
-    outflow_stocks = [s for s in stocks if s["retail_net"] < 0]
+    inflow_stocks = [s for s in stocks if s.get("retail_net", 0) > 0]
+    outflow_stocks = [s for s in stocks if s.get("retail_net", 0) < 0]
 
-    total_retail = sum(abs(s["retail_net"]) for s in stocks)
-    total_main = sum(abs(s.get("main_net", 0)) for s in stocks)
-    overall_ratio = round(total_retail / (total_retail + total_main) * 100, 1) if (total_retail + total_main) > 0.01 else 0
+    # 动态占比：全市场散户净额 / (|散户净额| + |主力净额|)
+    total_retail_net_abs = sum(abs(s.get("retail_net", 0)) for s in stocks)
+    total_main_net_abs = sum(abs(s.get("main_net", 0)) for s in stocks)
+    dynamic_ratio = round(total_retail_net_abs / (total_retail_net_abs + total_main_net_abs) * 100, 1) if (total_retail_net_abs + total_main_net_abs) > 0.01 else 0
+
+    # 静态占比：全市场散户成交额 / 总成交额
+    total_retail_amount = sum(s.get("retail_total", 0) for s in stocks)
+    total_market_amount = sum(s.get("total_amount", 0) for s in stocks)
+    static_ratio = round(total_retail_amount / total_market_amount * 100, 1) if total_market_amount > 0.01 else 0
 
     return {
-        "inflow_amount": round(sum(s["retail_inflow"] for s in stocks), 2),
+        "inflow_amount": round(sum(s.get("retail_inflow", 0) for s in stocks), 2),
         "inflow_count": len(inflow_stocks),
-        "outflow_amount": round(sum(s["retail_outflow"] for s in stocks), 2),
+        "outflow_amount": round(sum(s.get("retail_outflow", 0) for s in stocks), 2),
         "outflow_count": len(outflow_stocks),
-        "net_amount": round(sum(s["retail_net"] for s in stocks), 2),
+        "net_amount": round(sum(s.get("retail_net", 0) for s in stocks), 2),
         "net_count": len(inflow_stocks),
         "total_stocks": len(stocks),
-        "overall_retail_ratio": overall_ratio,
-        "overall_retail_share": overall_ratio,
+        "dynamic_ratio": dynamic_ratio,
+        "static_ratio": static_ratio,
+        "total_retail_amount": round(total_retail_amount, 2),
+        "total_market_amount": round(total_market_amount, 2),
     }
 
 
