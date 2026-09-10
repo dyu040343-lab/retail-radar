@@ -54,6 +54,26 @@ def load_cache():
     return None
 
 
+def migrate_old_stock(s):
+    """旧缓存字段迁移：双维度升级前的股票数据补全为新字段集合。
+
+    旧字段 retail_ratio 语义同新版 dynamic_ratio（散户净额方向占比），直接复用。
+    static_ratio / retail_total / main_total / total_amount 旧缓存没有，
+    无法补出真实值，置 0；前端会自然把这些股票从静态占比Tab过滤掉。
+    """
+    if "dynamic_ratio" not in s:
+        s["dynamic_ratio"] = s.get("retail_ratio", 0) or 0
+    if "static_ratio" not in s:
+        s["static_ratio"] = 0
+    if "retail_total" not in s:
+        s["retail_total"] = 0
+    if "main_total" not in s:
+        s["main_total"] = 0
+    if "total_amount" not in s:
+        s["total_amount"] = 0
+    return s
+
+
 def save_cache(data):
     try:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -292,7 +312,7 @@ def fetch_retail_money_flow():
     print("📦 新浪API不可用，尝试缓存...")
     cache = load_cache()
     if cache and cache.get("retail_flow"):
-        cached = cache["retail_flow"]
+        cached = [migrate_old_stock(s) for s in cache["retail_flow"]]
         print(f"  ✅ 缓存 {len(cached)} 条 [缓存于 {cache.get('last_updated')}]")
         return cached, "cached"
 
@@ -357,6 +377,14 @@ def get_fallback_data():
         total_abs = abs(inflow - outflow) + abs(main_val)
         retail_ratio = round((inflow - outflow) / total_abs * 100, 1) if total_abs > 0.01 else 0
         retail_share = round(abs(inflow - outflow) / total_abs * 100, 1) if total_abs > 0.01 else 0
+        # 备用数据估算：用净额规模反推总成交额，让双维度占比有合理值
+        retail_total_est = round(abs(inflow) + abs(outflow), 2)
+        main_total_est = round(abs(main_val) * 2, 2)
+        total_amount_est = round(retail_total_est + main_total_est, 2)
+        # 动态占比：散户净额方向占比
+        dyn_ratio = round((inflow - outflow) / total_abs * 100, 1) if total_abs > 0.01 else 0
+        # 静态占比：散户成交额占总成交额比例
+        sta_ratio = round(retail_total_est / total_amount_est * 100, 1) if total_amount_est > 0.01 else 0
         stocks.append({
             "code": code, "name": name,
             "price": 0, "change_pct": 0,
@@ -364,8 +392,11 @@ def get_fallback_data():
             "retail_outflow": round(outflow, 2),
             "retail_net": round(inflow - outflow, 2),
             "main_net": main_val,
-            "retail_ratio": retail_ratio,
-            "retail_share": retail_share,
+            "retail_total": retail_total_est,
+            "main_total": main_total_est,
+            "total_amount": total_amount_est,
+            "dynamic_ratio": dyn_ratio,
+            "static_ratio": sta_ratio,
             "sector": sector,
         })
     return stocks
