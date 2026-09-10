@@ -788,6 +788,15 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   letter-spacing: 0.5px;
 }
 
+.sh-table th.sortable { cursor: pointer; user-select: none; transition: color 0.15s; }
+.sh-table th.sortable:hover { color: var(--accent); }
+.sh-table th.sortable .sort-icon { display: inline-block; margin-left: 3px; opacity: 0.3; font-size: 8px; }
+.sh-table th.sort-asc .sort-icon { opacity: 1; color: var(--green); }
+.sh-table th.sort-asc .sort-icon::after { content: '\25B2'; }
+.sh-table th.sort-desc .sort-icon { opacity: 1; color: var(--red); }
+.sh-table th.sort-desc .sort-icon::after { content: '\25BC'; }
+.sh-table th.sort-none .sort-icon::after { content: '\25C5\25C7'; }
+
 .sh-table td {
   padding: 7px 8px;
   border-bottom: 1px solid var(--border);
@@ -1217,16 +1226,22 @@ function renderChart(stocks, type, color) {
 }
 
 function renderTable(stocks) {
-  let headHtml = '<tr>' +
-    '<th onclick="sortTable(\'code\')">代码</th>' +
-    '<th onclick="sortTable(\'name\')">名称</th>' +
-    '<th onclick="sortTable(\'retail_net\')">净流入</th>' +
-    '<th onclick="sortTable(\'main_net\')">主力净额</th>' +
-    '<th onclick="sortTable(\'dynamic_ratio\')">动态占比</th>' +
-    '<th onclick="sortTable(\'price\')">价格</th>' +
-    '<th onclick="sortTable(\'change_pct\')">涨跌</th>' +
-    '<th onclick="sortTable(\'sector\')">行业</th>' +
-  '</tr>';
+  const cols = [
+    {key: 'code', label: '代码'},
+    {key: 'name', label: '名称'},
+    {key: 'retail_net', label: '净流入'},
+    {key: 'main_net', label: '主力净额'},
+    {key: 'dynamic_ratio', label: '动态占比'},
+    {key: 'price', label: '价格'},
+    {key: 'change_pct', label: '涨跌'},
+    {key: 'sector', label: '行业'},
+  ];
+  let headHtml = '<tr>' + cols.map(c => {
+    let cls = 'sortable';
+    if (sortCol === c.key) cls += sortAsc ? ' sort-asc' : ' sort-desc';
+    else cls += ' sort-none';
+    return '<th class="' + cls + '" onclick="sortTable(\'' + c.key + '\')">' + c.label + '<span class="sort-icon"></span></th>';
+  }).join('') + '</tr>';
 
   let displayStocks = stocks;
   if (searchText) {
