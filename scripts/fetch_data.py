@@ -73,81 +73,88 @@ def to_float(val):
 
 
 def fetch_from_akshare():
-    """新浪财经批量接口 - 全市场资金流数据"""
-    print("🔍 [数据源] 新浪财经批量接口（资金流）...")
+    """东方财富 push2 API - 四档完整数据（curl已验证香港可达）"""
+    print("🔍 [数据源] 东方财富 push2 API（四档资金流）...")
 
-    SINA_HEADERS = {
+    EM_HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "http://vip.stock.finance.sina.com.cn/",
-        "Accept": "*/*",
+        "Referer": "https://data.eastmoney.com/bkzj/hy.html",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
     }
 
-    all_items = []
+    all_stocks = []
 
     for attempt in range(3):
         try:
-            all_items = []
-            for page in [1, 2, 3]:
-                url = "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssl_bkzj_ssggzj"
+            all_stocks = []
+            page = 1
+            total_pages = 1
+            while page <= total_pages:
+                url = "https://push2.eastmoney.com/api/qt/clist/get"
                 params = {
-                    "page": page,
-                    "num": 2000,
-                    "sort": "netamount",
-                    "asc": "0",
-                    "bankuai": "ssgzj",
-                    "nodeId": "0",
-                    "fenlei": "0",
-                    "bankuaiType": "ssgzj",
+                    "pn": page,
+                    "pz": 5000,
+                    "po": 1,
+                    "np": 1,
+                    "fltt": 2,
+                    "invt": 2,
+                    "fid": "f62",
+                    "fs": "m:0 t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
+                    "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
                 }
-                resp = requests.get(url, params=params, headers=SINA_HEADERS, timeout=15)
-                resp.encoding = "gbk"
-                items = json.loads(resp.text)
-                if not items:
+                resp = requests.get(url, params=params, headers=EM_HEADERS, timeout=15)
+                resp.encoding = "utf-8"
+                data = resp.json()
+                if data.get("data") is None:
                     break
-                all_items.extend(items)
-                print(f"  📄 第{page}页: {len(items)} 条")
+                total = data["data"].get("total", 0)
+                total_pages = (total + 4999) // 5000
+                items = data["data"].get("diff", [])
+                all_stocks.extend(items)
+                print(f"  📄 第{page}/{total_pages}页: {len(items)} 条")
+                page += 1
 
-            if all_items:
-                print(f"  📊 新浪返回 {len(all_items)} 条")
-                break
+            print(f"  📊 东方财富返回 {len(all_stocks)} 条")
+            break
         except Exception as e:
             print(f"  ⚠️ 第{attempt+1}/3次获取失败: {e}")
             if attempt == 2:
-                print("  📦 新浪不可用，尝试缓存...")
+                print("  📦 东方财富不可用，尝试缓存...")
                 return []
             time.sleep(2)
     else:
         return []
 
-    # 调试: 打印第一条数据的所有字段
-    if all_items:
-        print(f"  🔧 样本字段: {list(all_items[0].keys())}")
-
+    # 字段映射: f62=主力净额, f184=主力净占比, f66=超大单净额, f69=超大单净占比,
+    #          f72=大单净额, f75=大单净占比, f78=中单净额, f81=中单净占比,
+    #          f84=小单净额, f87=小单净占比, f124=5日涨跌
     stocks = []
-    for item in all_items:
-        code = str(item.get("symbol", "")).strip()
-        name = str(item.get("name", "")).strip()
+    for item in all_stocks:
+        code = str(item.get("f12", "")).strip()
+        name = str(item.get("f14", "")).strip()
         if not code or not name:
             continue
 
-        # 新浪字段: r0=特大单, r1=大单, r2=中单, r3=小单/散户
-        r0_in = to_float(item.get("r0_in", 0))
-        r0_out = to_float(item.get("r0_out", 0))
-        r1_in = to_float(item.get("r1_in", 0))
-        r1_out = to_float(item.get("r1_out", 0))
-        r2_in = to_float(item.get("r2_in", 0))
-        r2_out = to_float(item.get("r2_out", 0))
-        r3_in = to_float(item.get("r3_in", 0))
-        r3_out = to_float(item.get("r3_out", 0))
+        price = to_float(item.get("f2"))
+        change_pct = to_float(item.get("f3"))
+        change_pct = change_pct * 100 if abs(change_pct) < 1 else change_pct
 
-        price = to_float(item.get("price", 0))
-        change_pct = to_float(item.get("changepercent", 0))
+        super_net = to_float(item.get("f66"))
+        large_net = to_float(item.get("f72"))
+        medium_net = to_float(item.get("f78"))
+        small_net = to_float(item.get("f84"))
+
+        super_pct = to_float(item.get("f69"))
+        large_pct = to_float(item.get("f75"))
+        medium_pct = to_float(item.get("f81"))
+        small_pct = to_float(item.get("f87"))
 
         yi = 100000000
-        super_net_yi = round((r0_in - r0_out) / yi, 4)
-        large_net_yi = round((r1_in - r1_out) / yi, 4)
-        medium_net_yi = round((r2_in - r2_out) / yi, 4)
-        small_net_yi = round((r3_in - r3_out) / yi, 4)
+        super_net_yi = round(super_net / yi, 4)
+        large_net_yi = round(large_net / yi, 4)
+        medium_net_yi = round(medium_net / yi, 4)
+        small_net_yi = round(small_net / yi, 4)
 
         retail_net = small_net_yi
         main_net = round(super_net_yi + large_net_yi + medium_net_yi, 4)
@@ -155,16 +162,15 @@ def fetch_from_akshare():
         retail_inflow = max(retail_net, 0)
         retail_outflow = max(-retail_net, 0)
 
-        total_amount = round(to_float(item.get("amount", 0)) / yi, 2)
+        if small_pct != 0:
+            total_amount = round(retail_net / (small_pct / 100), 2)
+        elif super_pct != 0:
+            total_amount = round(main_net / (super_pct / 100), 2)
+        else:
+            total_amount = 0
 
         total_abs = abs(retail_net) + abs(main_net)
         dynamic_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.001 else 0
-
-        # 净占比（各档净额占总成交额的比例）
-        super_pct = round(super_net_yi / total_amount * 100, 2) if total_amount > 0.01 else 0
-        large_pct = round(large_net_yi / total_amount * 100, 2) if total_amount > 0.01 else 0
-        medium_pct = round(medium_net_yi / total_amount * 100, 2) if total_amount > 0.01 else 0
-        small_pct = round(small_net_yi / total_amount * 100, 2) if total_amount > 0.01 else 0
 
         stocks.append({
             "code": code,
@@ -186,7 +192,7 @@ def fetch_from_akshare():
             "total_amount": total_amount,
             "dynamic_ratio": dynamic_ratio,
             "sector": guess_sector(name, code),
-            "source": "sina",
+            "source": "eastmoney",
         })
 
     print(f"  ✅ 解析完成: {len(stocks)} 条")
@@ -200,10 +206,10 @@ def fetch_retail_money_flow():
 
     stocks = fetch_from_akshare()
     if stocks and len(stocks) > 50:
-        print(f"  ✅ 使用 akshare 全市场数据（{len(stocks)} 条）")
+        print(f"  ✅ 使用东方财富全市场数据（{len(stocks)} 条）")
         return stocks, "live"
 
-    print("📦 akshare 不可用，尝试缓存...")
+    print("📦 东方财富不可用，尝试缓存...")
     cache = load_cache()
     if cache and cache.get("retail_flow"):
         cached = cache["retail_flow"]
