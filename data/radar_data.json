@@ -7,11 +7,13 @@
     "net_amount": -31.64,
     "net_count": 1037,
     "total_stocks": 5962,
-    "overall_retail_ratio": 8.5,
-    "overall_retail_share": 8.5,
-    "update_time": "2026-09-10 06:19:10",
-    "data_status": "live",
-    "data_label": "实时数据"
+    "dynamic_ratio": 8.5,
+    "static_ratio": 0,
+    "total_retail_amount": 0,
+    "total_market_amount": 0,
+    "update_time": "2026-09-10 06:37:51",
+    "data_status": "cached",
+    "data_label": "收盘数据（缓存）"
   },
   "retail_flow": [
     {
@@ -84785,7 +84787,7 @@
       "notice_date": "2026-08-20"
     }
   ],
-  "last_updated": "2026-09-10 06:19:10",
-  "data_source": "东方财富/新浪财经",
-  "data_status": "live"
+  "last_updated": "2026-09-10 06:37:51",
+  "data_source": "缓存数据",
+  "data_status": "cached"
 }
