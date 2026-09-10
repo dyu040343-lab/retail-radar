@@ -87,70 +87,80 @@ def guess_sector(name, code):
 
 
 def fetch_from_eastmoney():
-    """东方财富实时API - 交易时间内可用，仅用可靠的净额字段"""
-    print("🔍 [数据源1] 东方财富API...")
+    """东方财富实时API - 全市场扫描，分页获取所有A股"""
+    print("🔍 [数据源1] 东方财富API（全市场）...")
     stocks = []
     try:
         url = "https://push2.eastmoney.com/api/qt/clist/get"
-        params_sh = {
-            "pn": "1", "pz": "50", "po": "1", "np": "1",
-            "ut": "b2884a393a59ad64002292a3e90d46a5",
-            "fltt": "2", "invt": "2", "fid": "f84",
-            "fs": "m:1+t:2,m:1+t:23",
-            "fields": "f2,f3,f12,f14,f62,f84,f78",
-            "_": str(int(time.time() * 1000))
-        }
-        params_sz = params_sh.copy()
-        params_sz["fs"] = "m:0+t:6,m:0+t:80,m:0+t:13,m:0+t:81"
+        # 沪深全A股：沪市主板+科创板 + 深市主板+创业板+中小板
+        markets = [
+            ("沪市", "m:1+t:2,m:1+t:23"),
+            ("深市", "m:0+t:6,m:0+t:80,m:0+t:13,m:0+t:81"),
+        ]
+        for market_name, fs in markets:
+            page = 1
+            while True:
+                params = {
+                    "pn": str(page), "pz": "200", "po": "1", "np": "1",
+                    "ut": "b2884a393a59ad64002292a3e90d46a5",
+                    "fltt": "2", "invt": "2", "fid": "f84",
+                    "fs": fs,
+                    "fields": "f2,f3,f12,f14,f62,f84,f78",
+                    "_": str(int(time.time() * 1000))
+                }
+                try:
+                    resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
+                    if resp.status_code == 200 and resp.text.strip():
+                        data = resp.json()
+                        diff = data.get("data", {}).get("diff", [])
+                        if not diff:
+                            break
+                        for item in diff:
+                            code = item.get("f12", "")
+                            name = item.get("f14", "")
+                            price = item.get("f2", 0)
+                            change_pct = item.get("f3", 0)
+                            small_net = item.get("f84", 0) or 0
+                            medium_net = item.get("f78", 0) or 0
+                            retail_net = (small_net + medium_net) / 100000000
+                            main_net = item.get("f62", 0) or 0
+                            main_net_yi = round(main_net / 100000000, 2)
 
-        for market, params in [("沪市", params_sh), ("深市", params_sz)]:
-            try:
-                resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
-                if resp.status_code == 200 and resp.text.strip():
-                    data = resp.json()
-                    diff = data.get("data", {}).get("diff", [])
-                    for item in diff:
-                        code = item.get("f12", "")
-                        name = item.get("f14", "")
-                        price = item.get("f2", 0)
-                        change_pct = item.get("f3", 0)
-                        small_net = item.get("f84", 0) or 0
-                        medium_net = item.get("f78", 0) or 0
-                        retail_net = (small_net + medium_net) / 100000000
-                        main_net = item.get("f62", 0) or 0
-                        main_net_yi = round(main_net / 100000000, 2)
+                            retail_inflow = max(retail_net, 0)
+                            retail_outflow = max(-retail_net, 0)
 
-                        # 东方财富只有净额数据，流入/流出从净额推算
-                        retail_inflow = max(retail_net, 0)
-                        retail_outflow = max(-retail_net, 0)
-
-                        total_abs = abs(retail_net) + abs(main_net_yi)
-                        retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
-                        retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
-                        stocks.append({
-                            "code": code, "name": name,
-                            "price": round(price, 2) if isinstance(price, (int, float)) else 0,
-                            "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
-                            "retail_inflow": round(retail_inflow, 2),
-                            "retail_outflow": round(retail_outflow, 2),
-                            "retail_net": round(retail_net, 2),
-                            "main_net": main_net_yi,
-                            "retail_ratio": retail_ratio,
-                            "retail_share": retail_share,
-                            "sector": guess_sector(name, code),
-                            "source": "eastmoney",
-                        })
-                    print(f"  ✅ {market}: {len(diff)} 条")
-                else:
-                    print(f"  ⚠️ {market}: status={resp.status_code}")
-            except Exception as e:
-                print(f"  ⚠️ {market}失败: {e}")
+                            total_abs = abs(retail_net) + abs(main_net_yi)
+                            retail_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.01 else 0
+                            retail_share = round(abs(retail_net) / total_abs * 100, 1) if total_abs > 0.01 else 0
+                            stocks.append({
+                                "code": code, "name": name,
+                                "price": round(price, 2) if isinstance(price, (int, float)) else 0,
+                                "change_pct": round(change_pct, 2) if isinstance(change_pct, (int, float)) else 0,
+                                "retail_inflow": round(retail_inflow, 2),
+                                "retail_outflow": round(retail_outflow, 2),
+                                "retail_net": round(retail_net, 2),
+                                "main_net": main_net_yi,
+                                "retail_ratio": retail_ratio,
+                                "retail_share": retail_share,
+                                "sector": guess_sector(name, code),
+                                "source": "eastmoney",
+                            })
+                        if len(diff) < 200:
+                            break
+                        page += 1
+                    else:
+                        print(f"  ⚠️ {market_name} p{page}: status={resp.status_code}")
+                        break
+                except Exception as e:
+                    print(f"  ⚠️ {market_name} p{page}失败: {e}")
+                    break
+            print(f"  ✅ {market_name}: 累计 {len(stocks)} 条")
     except Exception as e:
         print(f"  ⚠️ 东方财富不可用: {e}")
 
     if stocks:
-        print(f"  ✅ 东方财富共 {len(stocks)} 条 [实时]")
-    return stocks[:80] if stocks else []
+        print(f"  ✅ 东方财富全市场共 {len(stocks)} 条 [实时]")
+    return stocks
 
 
 def fetch_from_sina():
