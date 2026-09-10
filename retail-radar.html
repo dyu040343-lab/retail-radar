@@ -321,7 +321,7 @@ body::after {
 /* ═══ KPI Cards ═══ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.4fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -995,38 +995,15 @@ td.code-cell { color: var(--dim); font-size: 10px; }
       <div class="kpi-value" id="kpiNetAmount">--</div>
       <div class="kpi-sub">共 <span class="num" id="kpiTotal">--</span> 只股票</div>
     </div>
-    <div class="kpi-card dual">
+    <div class="kpi-card ratio">
       <div class="kpi-label">
-        <span>散户/主力占比</span>
-        <span class="kpi-label-tag" style="color:var(--purple)">双维度</span>
+        <span>动态占比 · 净额方向</span>
+        <span class="kpi-label-tag" style="color:var(--purple)">动态</span>
       </div>
-      <div class="dual-split-labels">
-        <span class="retail-label">散户</span>
-        <span class="main-label">主力</span>
-      </div>
-      <div class="dual-split-bar">
-        <div class="dual-split-retail" id="dualSplitRetail" style="width:50%"></div>
-        <div class="dual-split-main" id="dualSplitMain" style="width:50%"></div>
-      </div>
-      <div class="dual-ratio-section">
-        <div class="dual-ratio-row">
-          <span class="dual-ratio-label">动态</span>
-          <div class="dual-ratio-bar">
-            <div class="dual-ratio-bar-fill retail" id="dualRatioDynamic" style="width:0%"></div>
-          </div>
-          <span class="dual-ratio-val" id="dualValDynamic">--%</span>
-        </div>
-        <div class="dual-ratio-row">
-          <span class="dual-ratio-label">静态</span>
-          <div class="dual-ratio-bar">
-            <div class="dual-ratio-bar-fill static" id="dualRatioStatic" style="width:0%"></div>
-          </div>
-          <span class="dual-ratio-val" id="dualValStatic">--%</span>
-        </div>
-      </div>
-      <div class="kpi-sub" style="margin-top:8px">
-        动态: 散户 <span class="num" id="kpiDynamicNum">--</span>% · 主力 <span class="num" id="kpiMainNum">--</span>%
-        <br>静态: 散户 <span class="num" id="kpiRetailAmt">--</span>亿 / 总 <span class="num" id="kpiTotalAmt">--</span>亿
+      <div class="kpi-value" id="kpiDynamicRatio">--</div>
+      <div class="kpi-sub">散户 <span class="num" id="kpiDynamicNum">--</span>% · 主力 <span class="num" id="kpiMainNum">--</span>%</div>
+      <div class="ratio-bar">
+        <div class="ratio-bar-fill retail" id="ratioBarDynamic" style="width:0%"></div>
       </div>
     </div>
   </div>
@@ -1034,7 +1011,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   <!-- Main Tabs -->
   <div class="tab-bar">
     <div class="tab active" onclick="switchTab('flow')">资金维度</div>
-    <div class="tab" onclick="switchTab('ratio')">占比维度</div>
+    <div class="tab" onclick="switchTab('dynamic')">动态占比</div>
   </div>
 
   <!-- Sub Tabs -->
@@ -1167,19 +1144,10 @@ function render() {
   document.getElementById('kpiTotal').textContent = ov.total_stocks || 0;
 
   const dr = ov.dynamic_ratio || 0;
-  document.getElementById('dualValDynamic').textContent = dr.toFixed(1) + '%';
-  document.getElementById('dualRatioDynamic').style.width = Math.min(Math.abs(dr), 100) + '%';
+  document.getElementById('kpiDynamicRatio').textContent = dr.toFixed(1) + '%';
   document.getElementById('kpiDynamicNum').textContent = dr.toFixed(1);
   document.getElementById('kpiMainNum').textContent = (100 - dr).toFixed(1);
-  const drAbs = Math.min(Math.abs(dr), 100);
-  document.getElementById('dualSplitRetail').style.width = drAbs + '%';
-  document.getElementById('dualSplitMain').style.width = (100 - drAbs) + '%';
-
-  const sr = ov.static_ratio || 0;
-  document.getElementById('dualValStatic').textContent = sr.toFixed(1) + '%';
-  document.getElementById('dualRatioStatic').style.width = Math.min(sr, 100) + '%';
-  document.getElementById('kpiRetailAmt').textContent = ov.total_retail_amount || 0;
-  document.getElementById('kpiTotalAmt').textContent = ov.total_market_amount || 0;
+  document.getElementById('ratioBarDynamic').style.width = Math.min(Math.abs(dr), 100) + '%';
 
   renderFlow();
   renderShareholders();
@@ -1205,12 +1173,6 @@ function renderFlow() {
   } else if (currentSub === 'main_dominant') {
     sorted = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)).slice(0, 30);
     title = '主力动态主导 TOP（净额方向占比）'; color = 'blue';
-  } else if (currentSub === 'static_high') {
-    sorted = stocks.filter(s => s.total_amount > 0.01).sort((a,b) => (b.static_ratio||0) - (a.static_ratio||0)).slice(0, 30);
-    title = '散户高占比 TOP（成交额占比）'; color = 'purple';
-  } else if (currentSub === 'static_low') {
-    sorted = stocks.filter(s => s.total_amount > 0.01).sort((a,b) => (a.static_ratio||0) - (b.static_ratio||0)).slice(0, 30);
-    title = '散户低占比 TOP（主力筹码集中）'; color = 'blue';
   }
 
   document.getElementById('chartTitle').textContent = title;
@@ -1227,7 +1189,7 @@ function renderChart(stocks, type, color) {
     if (type === 'inflow') return Math.abs(s.retail_inflow || 0);
     if (type === 'outflow') return Math.abs(s.retail_outflow || 0);
     if (type === 'net') return Math.abs(s.retail_net || 0);
-    if (type === 'static_high' || type === 'static_low') return Math.abs(s.static_ratio || 0);
+    if (type === 'static_high' || type === 'static_low') return 0;
     return Math.abs(s.dynamic_ratio || 0);
   }), 0.01);
   let html = '';
@@ -1244,10 +1206,6 @@ function renderChart(stocks, type, color) {
       val = s.dynamic_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--purple)'; barColor = 'purple';
     } else if (type === 'main_dominant') {
       val = s.dynamic_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--blue)'; barColor = 'blue';
-    } else if (type === 'static_high') {
-      val = s.static_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--purple)'; barColor = 'purple';
-    } else if (type === 'static_low') {
-      val = s.static_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--blue)'; barColor = 'blue';
     }
     let pct = Math.abs(val) / maxVal * 100;
     html += '<div class="bar-item">' +
@@ -1265,7 +1223,6 @@ function renderTable(stocks) {
     '<th onclick="sortTable(\'retail_net\')">净流入</th>' +
     '<th onclick="sortTable(\'main_net\')">主力净额</th>' +
     '<th onclick="sortTable(\'dynamic_ratio\')">动态占比</th>' +
-    '<th onclick="sortTable(\'static_ratio\')">静态占比</th>' +
     '<th onclick="sortTable(\'price\')">价格</th>' +
     '<th onclick="sortTable(\'change_pct\')">涨跌</th>' +
     '<th onclick="sortTable(\'sector\')">行业</th>' +
@@ -1283,7 +1240,6 @@ function renderTable(stocks) {
   for (const s of displayStocks) {
     const cls = s.change_pct > 0 ? 'price-up' : s.change_pct < 0 ? 'price-down' : '';
     const dr = s.dynamic_ratio || 0;
-    const sr = s.static_ratio || 0;
     const drColor = dr > 0 ? 'var(--purple)' : 'var(--blue)';
     const drBarWidth = Math.min(Math.abs(dr), 100);
     const drBarColor = dr > 0 ? 'var(--purple)' : 'var(--blue)';
@@ -1294,7 +1250,6 @@ function renderTable(stocks) {
       '<td style="color:' + ((s.main_net||0) >= 0 ? 'var(--red)' : 'var(--green)') + '">' + ((s.main_net||0) >= 0 ? '+' : '') + (s.main_net||0).toFixed(2) + '</td>' +
       '<td><div class="ratio-cell"><span style="color:' + drColor + ';font-weight:600">' + dr.toFixed(1) + '%</span>' +
         '<span class="mini-bar"><span class="mini-fill" style="width:' + drBarWidth + '%;background:' + drBarColor + '"></span></span></div></td>' +
-      '<td><span style="color:var(--cyan);font-weight:600">' + sr.toFixed(1) + '%</span></td>' +
       '<td>' + (s.price > 0 ? s.price.toFixed(2) : '--') + '</td>' +
       '<td class="' + cls + '">' + (s.change_pct ? (s.change_pct > 0 ? '+' : '') + s.change_pct.toFixed(2) + '%' : '--') + '</td>' +
       '<td><span class="tag">' + s.sector + '</span></td>' +
@@ -1329,8 +1284,6 @@ function filterTable() {
   else if (currentSub === 'net') stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
   else if (currentSub === 'dynamic_dominant') stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0));
   else if (currentSub === 'main_dominant') stocks = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0));
-  else if (currentSub === 'static_high') stocks = stocks.filter(s => s.total_amount > 0.01).sort((a,b) => (b.static_ratio||0) - (a.static_ratio||0));
-  else if (currentSub === 'static_low') stocks = stocks.filter(s => s.total_amount > 0.01).sort((a,b) => (a.static_ratio||0) - (b.static_ratio||0));
   renderTable(stocks.slice(0, 30));
 }
 
@@ -1340,11 +1293,9 @@ const TAB_SUBTABS = {
     {key: 'outflow', label: '流出TOP'},
     {key: 'net', label: '净流入TOP'},
   ],
-  ratio: [
+  dynamic: [
     {key: 'dynamic_dominant', label: '散户主导TOP'},
     {key: 'main_dominant', label: '主力主导TOP'},
-    {key: 'static_high', label: '散户高占比TOP'},
-    {key: 'static_low', label: '散户低占比TOP'},
   ],
 };
 

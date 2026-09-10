@@ -131,13 +131,8 @@ def fetch_from_akshare():
         else:
             total_amount = 0
 
-        retail_total = abs(retail_net)
-        main_total = abs(main_net)
-
         total_abs = abs(retail_net) + abs(main_net)
         dynamic_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.001 else 0
-
-        static_ratio = round(abs(retail_net) / total_amount * 100, 1) if total_amount > 0.01 else 0
 
         stocks.append({
             "code": code,
@@ -147,9 +142,7 @@ def fetch_from_akshare():
             "retail_inflow": round(retail_inflow, 4),
             "retail_outflow": round(retail_outflow, 4),
             "retail_net": round(retail_net, 4),
-            "retail_total": round(retail_total, 4),
             "main_net": round(main_net, 4),
-            "main_total": round(main_total, 4),
             "super_net": super_net_yi,
             "large_net": large_net_yi,
             "medium_net": medium_net_yi,
@@ -160,7 +153,6 @@ def fetch_from_akshare():
             "small_pct": small_pct,
             "total_amount": total_amount,
             "dynamic_ratio": dynamic_ratio,
-            "static_ratio": static_ratio,
             "sector": guess_sector(name, code),
             "source": "akshare",
         })
@@ -247,16 +239,13 @@ def get_fallback_data():
         total_abs = abs(small_n) + abs(main_n)
         dyn = round(small_n / total_abs * 100, 1) if total_abs > 0.001 else 0
         total_amt = round(abs(net) * 10, 2)
-        sta = round(abs(small_n) / total_amt * 100, 1) if total_amt > 0.01 else 0
         stocks.append({
             "code": code, "name": name,
             "price": 0, "change_pct": 0,
             "retail_inflow": max(small_n, 0),
             "retail_outflow": max(-small_n, 0),
             "retail_net": small_n,
-            "retail_total": abs(small_n),
             "main_net": main_n,
-            "main_total": abs(main_n),
             "super_net": super_n,
             "large_net": large_n,
             "medium_net": medium_n,
@@ -264,7 +253,6 @@ def get_fallback_data():
             "super_pct": 0, "large_pct": 0, "medium_pct": 0, "small_pct": 0,
             "total_amount": total_amt,
             "dynamic_ratio": dyn,
-            "static_ratio": sta,
             "sector": sector,
         })
     return stocks
@@ -372,10 +360,6 @@ def calc_overview(stocks):
     total_main_net_abs = sum(abs(s.get("main_net", 0)) for s in stocks)
     dynamic_ratio = round(total_retail_net_abs / (total_retail_net_abs + total_main_net_abs) * 100, 1) if (total_retail_net_abs + total_main_net_abs) > 0.01 else 0
 
-    total_retail_amount = sum(s.get("retail_total", 0) for s in stocks)
-    total_market_amount = sum(s.get("total_amount", 0) for s in stocks)
-    static_ratio = round(total_retail_amount / total_market_amount * 100, 1) if total_market_amount > 0.01 else 0
-
     total_super = round(sum(s.get("super_net", 0) for s in stocks), 4)
     total_large = round(sum(s.get("large_net", 0) for s in stocks), 4)
     total_medium = round(sum(s.get("medium_net", 0) for s in stocks), 4)
@@ -390,9 +374,6 @@ def calc_overview(stocks):
         "net_count": len(inflow_stocks),
         "total_stocks": len(stocks),
         "dynamic_ratio": dynamic_ratio,
-        "static_ratio": static_ratio,
-        "total_retail_amount": round(total_retail_amount, 2),
-        "total_market_amount": round(total_market_amount, 2),
         "super_total": total_super,
         "large_total": total_large,
         "medium_total": total_medium,
