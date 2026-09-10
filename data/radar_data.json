@@ -9,9 +9,9 @@
     "total_stocks": 500,
     "overall_retail_ratio": 50.0,
     "overall_retail_share": 50.0,
-    "update_time": "2026-09-10 02:23:47",
-    "data_status": "live",
-    "data_label": "实时数据"
+    "update_time": "2026-09-10 02:30:32",
+    "data_status": "cached",
+    "data_label": "收盘数据（缓存）"
   },
   "retail_flow": [
     {
@@ -8317,7 +8317,7 @@
       "notice_date": "2026-08-20"
     }
   ],
-  "last_updated": "2026-09-10 02:23:47",
-  "data_source": "东方财富/新浪财经",
-  "data_status": "live"
+  "last_updated": "2026-09-10 02:30:32",
+  "data_source": "缓存数据",
+  "data_status": "cached"
 }
