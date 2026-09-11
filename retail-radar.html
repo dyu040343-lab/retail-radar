@@ -1253,15 +1253,14 @@ function getBaseList() {
       stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) > 0); break;
     case 'netout': case 'medium_netout':
       stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) < 0); break;
-    // dynamic tab 4 个 subtab（占比维度）：散户/主力净额有买，附加 _ratio 字段
+    // dynamic tab 4 个 subtab（占比维度，口径B全区间）：不加方向 filter，
+    // TOP=占比最正（净流入最强），BOTTOM=占比最负（净流出最强），方向由排序决定
     case 'retail_ratio_top':
     case 'retail_ratio_bottom':
-      stocks = stocks.filter(s => (s.retail_net||0) > 0);
       stocks.forEach(s => s._ratio = s.dynamic_ratio || 0);  // 散户净额/总成交
       break;
     case 'main_ratio_top':
     case 'main_ratio_bottom':
-      stocks = stocks.filter(s => (s.main_net||0) > 0);
       stocks.forEach(s => {
         const amt = s.total_amount || 0;
         s._ratio = amt > 0.01 ? (s.main_net || 0) / amt * 100 : 0;  // 主力净额/总成交
@@ -1295,10 +1294,10 @@ function chartTitleFor() {
   switch (currentSub) {
     case 'net': case 'medium_net': return n + '净流入 TOP30';
     case 'netout': case 'medium_netout': return n + '净流出 TOP30';
-    case 'retail_ratio_top': return '散户占比TOP30（散户净额>0，占比最大正值，剔除成交<5亿）';
-    case 'retail_ratio_bottom': return '散户占比BOTTOM30（散户净额>0，占比最小/接近0）';
-    case 'main_ratio_top': return '主力占比TOP30（主力净额>0，占比最大正值）';
-    case 'main_ratio_bottom': return '主力占比BOTTOM30（主力净额>0，占比最小/接近0）';
+    case 'retail_ratio_top': return '散户占比TOP30（占比最正 = 散户净买入最强，剔除成交<5亿）';
+    case 'retail_ratio_bottom': return '散户占比BOTTOM30（占比最负 = 散户净卖出最强）';
+    case 'main_ratio_top': return '主力占比TOP30（占比最正 = 主力净买入最强）';
+    case 'main_ratio_bottom': return '主力占比BOTTOM30（占比最负 = 主力净卖出最强）';
   }
   return 'TOP30';
 }
