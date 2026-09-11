@@ -425,13 +425,23 @@ def _fallback_shareholder_data():
 
 
 def calc_overview(stocks):
-    """计算KPI汇总"""
-    inflow_stocks = [s for s in stocks if s.get("retail_net", 0) > 0]
-    outflow_stocks = [s for s in stocks if s.get("retail_net", 0) < 0]
+    """计算KPI汇总（三档并列：散户=小单、主力=超大单+大单、中单独立成档）"""
+    retail_inflow = [s for s in stocks if s.get("retail_net", 0) > 0]
+    retail_outflow = [s for s in stocks if s.get("retail_net", 0) < 0]
+    medium_inflow = [s for s in stocks if s.get("medium_net", 0) > 0]
+    medium_outflow = [s for s in stocks if s.get("medium_net", 0) < 0]
 
-    total_retail_net_abs = sum(abs(s.get("retail_net", 0)) for s in stocks)
-    total_main_net_abs = sum(abs(s.get("main_net", 0)) for s in stocks)
-    dynamic_ratio = round(total_retail_net_abs / (total_retail_net_abs + total_main_net_abs) * 100, 1) if (total_retail_net_abs + total_main_net_abs) > 0.01 else 0
+    # 三档绝对值之和（用于占比：按资金绝对体量加权）
+    retail_abs = sum(abs(s.get("retail_net", 0)) for s in stocks)
+    medium_abs = sum(abs(s.get("medium_net", 0)) for s in stocks)
+    main_abs = sum(abs(s.get("main_net", 0)) for s in stocks)
+    tier_total = retail_abs + medium_abs + main_abs
+    if tier_total > 0.01:
+        retail_pct = round(retail_abs / tier_total * 100, 1)
+        medium_pct = round(medium_abs / tier_total * 100, 1)
+        main_pct = round(main_abs / tier_total * 100, 1)
+    else:
+        retail_pct = medium_pct = main_pct = 0.0
 
     total_super = round(sum(s.get("super_net", 0) for s in stocks), 4)
     total_large = round(sum(s.get("large_net", 0) for s in stocks), 4)
@@ -440,17 +450,30 @@ def calc_overview(stocks):
     total_main = round(sum(s.get("main_net", 0) for s in stocks), 4)
 
     return {
-        "inflow_count": len(inflow_stocks),
-        "outflow_count": len(outflow_stocks),
+        # 散户（小单）
+        "inflow_count": len(retail_inflow),
+        "outflow_count": len(retail_outflow),
         "net_amount": round(sum(s.get("retail_net", 0) for s in stocks), 2),
-        "net_count": len(inflow_stocks),
-        "total_stocks": len(stocks),
-        "dynamic_ratio": dynamic_ratio,
+        "net_count": len(retail_inflow),
+        # 中单（独立一档，前端新 KPI 卡）
+        "medium_amount": round(total_medium, 2),
+        "medium_inflow_count": len(medium_inflow),
+        "medium_outflow_count": len(medium_outflow),
+        # 主力（超大单+大单）
         "main_amount": total_main,
         "super_total": total_super,
         "large_total": total_large,
         "medium_total": total_medium,
         "small_total": total_small,
+        # 资金构成占比（三档并列，按绝对额加权）
+        "tier_share": {
+            "retail_pct": retail_pct,
+            "medium_pct": medium_pct,
+            "main_pct": main_pct,
+            "tier_total": round(tier_total, 2),
+        },
+        # 总量
+        "total_stocks": len(stocks),
     }
 
 
@@ -485,7 +508,9 @@ def main():
     print(f"\n✅ 数据保存成功: {output_path}")
     print(f"🕐 更新时间: {output['last_updated']}")
     print(f"📊 散户资金: {len(retail_flow)} 条 [{status_labels.get(data_status, data_status)}]")
-    print(f"💰 散户净额: {overview['net_amount']}亿 | 主力净额: {overview['main_amount']}亿 | 净流入{overview['inflow_count']}只 / 净流出{overview['outflow_count']}只")
+    print(f"💰 散户净额: {overview['net_amount']}亿 | 中单净额: {overview['medium_amount']}亿 | 主力净额: {overview['main_amount']}亿 | 散户净流入{overview['inflow_count']}只 / 净流出{overview['outflow_count']}只")
+    ts = overview['tier_share']
+    print(f"📊 三档占比: 散户{ts['retail_pct']}% · 中单{ts['medium_pct']}% · 主力{ts['main_pct']}%（按|净额|之和加权，总和{ts['tier_total']}亿）")
     print(f"📈 四档: 超大单{overview['super_total']}亿 | 大单{overview['large_total']}亿 | 中单{overview['medium_total']}亿 | 小单{overview['small_total']}亿")
     print(f"👥 股东户数: {len(shareholder_count)} 条")
     print("=" * 50)
