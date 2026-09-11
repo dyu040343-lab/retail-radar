@@ -19,7 +19,7 @@
       "tier_total": 3281.53
     },
     "total_stocks": 5913,
-    "update_time": "2026-09-11 07:08:00",
+    "update_time": "2026-09-11 07:56:24",
     "data_status": "live",
     "data_label": "实时数据"
   },
@@ -1975,9 +1975,9 @@
       "large_net": -0.0027,
       "medium_net": -0.1414,
       "small_net": 0.002,
-      "super_pct": 6.55,
+      "super_pct": 6.43,
       "large_pct": -0.02,
-      "medium_pct": -1.16,
+      "medium_pct": -1.14,
       "small_pct": 0.02,
       "total_amount": 10.0,
       "dynamic_ratio": 0.02,
@@ -22596,11 +22596,11 @@
       "medium_net": -0.0228,
       "small_net": -0.0026,
       "super_pct": 0.0,
-      "large_pct": 2.44,
-      "medium_pct": -3.89,
-      "small_pct": -0.44,
-      "total_amount": 0.59,
-      "dynamic_ratio": -0.44,
+      "large_pct": 2.08,
+      "medium_pct": -3.32,
+      "small_pct": -0.37,
+      "total_amount": 0.7,
+      "dynamic_ratio": -0.37,
       "sector": "塑料",
       "source": "eastmoney"
     },
@@ -56976,11 +56976,11 @@
       "medium_net": -0.0206,
       "small_net": -0.0048,
       "super_pct": 0.0,
-      "large_pct": -14.33,
-      "medium_pct": -16.95,
-      "small_pct": -3.99,
-      "total_amount": 0.12,
-      "dynamic_ratio": -4.0,
+      "large_pct": -11.31,
+      "medium_pct": -13.38,
+      "small_pct": -3.15,
+      "total_amount": 0.15,
+      "dynamic_ratio": -3.2,
       "sector": "电网设备",
       "source": "eastmoney"
     },
@@ -118755,6 +118755,19 @@
       "notice_date": "2026-08-20"
     },
     {
+      "code": "688801",
+      "name": "燧原科技",
+      "current": 28885,
+      "previous": 102,
+      "increase": 28783,
+      "change_pct": 28218.63,
+      "period": "2026-09",
+      "avg_market_cap": 5914822.09,
+      "total_market_cap": 170849636016.0,
+      "interval_chg": 179.22,
+      "notice_date": "2026-09-10"
+    },
+    {
       "code": "920125",
       "name": "鸿仕达",
       "current": 4494,
@@ -119572,22 +119585,9 @@
       "total_market_cap": 6943708464.0,
       "interval_chg": 64.13,
       "notice_date": "2026-08-29"
-    },
-    {
-      "code": "300302",
-      "name": "同有科技",
-      "current": 90935,
-      "previous": 42034,
-      "increase": 48901,
-      "change_pct": 116.34,
-      "period": "2026-06",
-      "avg_market_cap": 269686.35,
-      "total_market_cap": 24523928543.66,
-      "interval_chg": 158.04,
-      "notice_date": "2026-08-28"
     }
   ],
-  "last_updated": "2026-09-11 07:08:00",
+  "last_updated": "2026-09-11 07:56:24",
   "data_source": "东方财富push2接口",
   "data_status": "live"
 }
