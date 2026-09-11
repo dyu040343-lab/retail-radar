@@ -11,28 +11,28 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg-0: #07090f;
-  --bg-1: #0c1018;
-  --bg-2: #121723;
-  --card: #0f131c;
-  --border: #1a2030;
-  --border-hi: #2a3450;
-  --text: #d4dce8;
-  --text-hi: #f0f4fa;
-  --dim: #5a6378;
-  --dimmer: #3a4258;
-  --accent: #f5b942;
-  --accent-dim: #8a6b28;
-  --cyan: #00d4e8;
-  --cyan-dim: #0a6a78;
-  --red: #e8384a;
-  --red-dim: #6a1820;
-  --green: #22c55e;
-  --green-dim: #0e4a26;
-  --purple: #a855f7;
-  --purple-dim: #4a1f6a;
-  --blue: #3b82f6;
-  --blue-dim: #15264a;
+  --bg-0: #f4f6fa;
+  --bg-1: #eceff5;
+  --bg-2: #e2e8f2;
+  --card: #ffffff;
+  --border: #dfe5ee;
+  --border-hi: #c2cde0;
+  --text: #2a3548;
+  --text-hi: #101b2e;
+  --dim: #64748b;
+  --dimmer: #98a4b8;
+  --accent: #b45309;
+  --accent-dim: #f6e0b8;
+  --cyan: #0e7490;
+  --cyan-dim: #b8e6f0;
+  --red: #dc2626;
+  --red-dim: #f6c9cd;
+  --green: #16a34a;
+  --green-dim: #bfe9cd;
+  --purple: #7c3aed;
+  --purple-dim: #ddd0fb;
+  --blue: #2563eb;
+  --blue-dim: #c8d8fa;
 }
 
 body {
@@ -48,10 +48,10 @@ body::before {
   content: '';
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,185,66,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0,212,232,0.03) 0%, transparent 50%),
-    repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
-    repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,83,9,0.045) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(14,116,144,0.035) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(16,27,46,0.03) 39px, rgba(16,27,46,0.03) 40px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(16,27,46,0.03) 39px, rgba(16,27,46,0.03) 40px);
   pointer-events: none;
   z-index: 0;
 }
@@ -411,7 +411,7 @@ body::after {
 .kpi-card.share .kpi-value { color: var(--text-hi); font-size: 22px; line-height: 1.6; }
 
 .kpi-sub {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--dim);
   margin-top: 6px;
   font-family: 'JetBrains Mono', monospace;
@@ -462,7 +462,7 @@ body::after {
   justify-content: space-between;
   margin-top: 6px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .tier-legend-item { display: flex; align-items: center; gap: 4px; }
@@ -658,7 +658,7 @@ body::after {
   display: flex;
   justify-content: space-between;
   margin-bottom: 3px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .bar-name { font-weight: 600; color: var(--text); }
@@ -682,6 +682,7 @@ body::after {
 .bar-fill.accent { background: linear-gradient(90deg, var(--accent), var(--accent-dim)); }
 .bar-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-dim)); }
 .bar-fill.blue { background: linear-gradient(90deg, var(--blue), var(--blue-dim)); }
+.bar-fill.cyan { background: linear-gradient(90deg, var(--cyan), var(--cyan-dim)); }
 
 /* ═══ Table ═══ */
 .table-box {
@@ -701,14 +702,14 @@ body::after {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 th {
   text-align: left;
   padding: 8px 10px;
-  color: var(--dim);
-  font-weight: 500;
+  color: var(--text);
+  font-weight: 600;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   white-space: nowrap;
@@ -721,6 +722,14 @@ th {
 th:hover { color: var(--accent); }
 th.sorted { color: var(--accent); }
 
+/* 表头排序箭头：未排序显示双向箭头，激活列高亮 */
+th .sort-icon { display: inline-block; margin-left: 4px; font-size: 9px; opacity: 0.4; }
+th.sort-none .sort-icon::after { content: '\21C5'; }
+th.sort-asc { color: var(--accent); background: rgba(180,83,9,0.08); border-radius: 4px 4px 0 0; }
+th.sort-asc .sort-icon::after { content: '\25B2'; opacity: 1; }
+th.sort-desc { color: var(--accent); background: rgba(180,83,9,0.08); border-radius: 4px 4px 0 0; }
+th.sort-desc .sort-icon::after { content: '\25BC'; opacity: 1; }
+
 td {
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
@@ -728,7 +737,7 @@ td {
   font-variant-numeric: tabular-nums;
 }
 
-tr:hover { background: rgba(255,255,255,0.02); }
+tr:hover { background: rgba(16,27,46,0.045); }
 
 td.name-cell {
   font-family: 'Noto Sans SC', sans-serif;
@@ -744,10 +753,11 @@ td.code-cell { color: var(--dim); font-size: 10px; }
 .tag {
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: 9px;
-  background: rgba(255,255,255,0.04);
+  font-size: 10px;
+  background: rgba(16,27,46,0.05);
   font-family: 'Noto Sans SC', sans-serif;
-  color: var(--dim);
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .ratio-cell {
@@ -921,6 +931,10 @@ td.code-cell { color: var(--dim); font-size: 10px; }
 }
 
 /* ═══ Loading Skeleton ═══ */
+.kpi-card, .chart-box, .table-box, .sh-card, .footer-disclaimer {
+  box-shadow: 0 1px 4px rgba(16,27,46,0.07);
+}
+
 .skeleton {
   background: linear-gradient(90deg, var(--bg-1) 25%, var(--bg-2) 50%, var(--bg-1) 75%);
   background-size: 200% 100%;
@@ -1092,7 +1106,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
       <table>
         <thead id="tableHead"></thead>
         <tbody id="tableBody">
-          <tr><td colspan="8" style="text-align:center;color:var(--dim);padding:40px;">加载中...</td></tr>
+          <tr><td colspan="9" style="text-align:center;color:var(--dim);padding:40px;">加载中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1158,8 +1172,9 @@ let allData = null;
 let currentTab = 'retail';
 let currentSub = 'net';
 let autoTimer = null;
-let sortCol = null, sortAsc = false;
+let sortCol = null, sortAsc = false, userSorted = false;
 let searchText = '';
+let viewList = [];
 
 const STATUS_MAP = {
   live: { cls: 'status-live', text: '实时数据' },
@@ -1223,56 +1238,112 @@ function render() {
   renderShareholders();
 }
 
-function renderFlow() {
-  if (!allData?.retail_flow) return;
-  let stocks = [...allData.retail_flow];
+function PRIMARY_FIELD() { return (currentTab === 'medium') ? 'medium_net' : 'retail_net'; }
+function TAB_NAME() { return (currentTab === 'medium') ? '中单' : '散户'; }
+function IS_RATIO_SUB() { return currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom' || currentSub === 'main_dominant' || currentSub === 'main_bottom'; }
 
-  // 主 tab 决定主净额字段
-  const primaryField = (currentTab === 'medium') ? 'medium_net' : 'retail_net';
-  const tabName = (currentTab === 'medium') ? '中单' : '散户';
-  const barColor = (currentTab === 'medium') ? 'cyan' : 'accent';
-  let sorted, title, color;
-
-  if (currentSub === 'net' || currentSub === 'medium_net') {
-    sorted = stocks.sort((a,b) => (b[primaryField]||0) - (a[primaryField]||0)).slice(0, 30);
-    title = tabName + '净流入 TOP30'; color = barColor;
-  } else if (currentSub === 'netout' || currentSub === 'medium_netout') {
-    sorted = stocks.sort((a,b) => (a[primaryField]||0) - (b[primaryField]||0)).slice(0, 30);
-    title = tabName + '净流出 TOP30'; color = barColor;
-  } else if (currentSub === 'dynamic_dominant') {
-    sorted = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)).slice(0, 30);
-    title = '散户动态主导 TOP（净额方向占比）'; color = 'purple';
-  } else if (currentSub === 'main_dominant') {
-    sorted = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)).slice(0, 30);
-    title = '主力动态主导 TOP（净额方向占比）'; color = 'blue';
+function getBaseList() {
+  let stocks = [...(allData?.retail_flow || [])];
+  const pf = PRIMARY_FIELD();
+  switch (currentSub) {
+    case 'net': case 'medium_net':
+      stocks.sort((a,b) => (b[pf]||0) - (a[pf]||0)); break;
+    case 'netout': case 'medium_netout':
+      stocks.sort((a,b) => (a[pf]||0) - (b[pf]||0)); break;
+    case 'dynamic_dominant':
+      stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)); break;
+    case 'dynamic_bottom':
+      stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)); break;
+    case 'main_dominant':
+      stocks = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)); break;
+    case 'main_bottom':
+      stocks = stocks.filter(s => s.dynamic_ratio < 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)); break;
   }
-
-  document.getElementById('chartTitle').textContent = title;
-  renderChart(sorted, currentSub, color, primaryField);
-  renderTable(sorted, primaryField);
+  return stocks;
 }
 
-function renderChart(stocks, type, color, primaryField) {
+function applyDefaultSort() {
+  const pf = PRIMARY_FIELD();
+  const map = {
+    'net': [pf, false], 'medium_net': [pf, false],
+    'netout': [pf, true], 'medium_netout': [pf, true],
+    'dynamic_dominant': ['dynamic_ratio', false],
+    'dynamic_bottom': ['dynamic_ratio', true],
+    'main_dominant': ['dynamic_ratio', true],
+    'main_bottom': ['dynamic_ratio', false],
+  };
+  const d = map[currentSub] || [pf, false];
+  sortCol = d[0]; sortAsc = d[1]; userSorted = false;
+}
+
+function chartTitleFor() {
+  const n = TAB_NAME();
+  switch (currentSub) {
+    case 'net': case 'medium_net': return n + '净流入 TOP30';
+    case 'netout': case 'medium_netout': return n + '净流出 TOP30';
+    case 'dynamic_dominant': return '散户主导 TOP30（散户净额方向占比）';
+    case 'dynamic_bottom': return '散户垫底30（散户为正但主导最弱）';
+    case 'main_dominant': return '主力主导 TOP30（主力净额方向占比）';
+    case 'main_bottom': return '主力垫底30（主力为负但主导最弱）';
+  }
+  return 'TOP30';
+}
+
+function renderFlow() {
+  if (!allData?.retail_flow) return;
+  if (!userSorted) applyDefaultSort();
+  viewList = getBaseList();
+  renderView();
+}
+
+function renderView() {
+  const pf = PRIMARY_FIELD();
+  let list = viewList;
+  if (searchText) {
+    const q = searchText.toLowerCase();
+    list = list.filter(s => (s.code||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q));
+  }
+  const col = sortCol;
+  if (col) {
+    const asc = sortAsc;
+    list = [...list].sort((a,b) => {
+      let va = a[col], vb = b[col];
+      if (typeof va === 'string' || typeof vb === 'string') {
+        va = String(va || ''); vb = String(vb || '');
+        return asc ? va.localeCompare(vb, 'zh-CN') : vb.localeCompare(va, 'zh-CN');
+      }
+      va = va || 0; vb = vb || 0;
+      return asc ? va - vb : vb - va;
+    });
+  }
+  const top = list.slice(0, 30);
+  document.getElementById('chartTitle').textContent = chartTitleFor();
+  renderChart(top, pf);
+  renderTable(top, pf);
+}
+
+function renderChart(stocks, primaryField) {
   if (!stocks || stocks.length === 0) {
     document.getElementById('chartArea').innerHTML = '<div style="color:var(--dim);text-align:center;padding:40px;">暂无数据</div>';
     return;
   }
-  const isMoneyFlow = type === 'net' || type === 'netout' || type === 'medium_net' || type === 'medium_netout';
-  const maxVal = Math.max(...stocks.map(s => {
-    if (isMoneyFlow) return Math.abs(s[primaryField] || 0);
-    if (type === 'static_high' || type === 'static_low') return 0;
-    return Math.abs(s.dynamic_ratio || 0);
-  }), 0.01);
+  const isRatio = IS_RATIO_SUB();
+  const metric = isRatio ? 'dynamic_ratio' : primaryField;
+  const maxVal = Math.max(...stocks.map(s => Math.abs(s[metric] || 0)), 0.01);
   let html = '';
-  for (const s of stocks.slice(0, 30)) {
-    let val, displayVal, valColor, barColor;
-    if (isMoneyFlow) {
-      val = s[primaryField] || 0; displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
-      valColor = val >= 0 ? 'var(--red)' : 'var(--green)'; barColor = val >= 0 ? (color === 'cyan' ? 'cyan' : 'red') : (color === 'cyan' ? 'cyan' : 'green');
-    } else if (type === 'ratio_dominant' || type === 'dynamic_dominant') {
-      val = s.dynamic_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--purple)'; barColor = 'purple';
-    } else if (type === 'main_dominant') {
-      val = s.dynamic_ratio || 0; displayVal = val.toFixed(1) + '%'; valColor = 'var(--blue)'; barColor = 'blue';
+  for (const s of stocks) {
+    const val = s[metric] || 0;
+    let displayVal, valColor, barColor;
+    if (isRatio) {
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
+      const purpleSide = currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom';
+      valColor = purpleSide ? 'var(--purple)' : 'var(--blue)';
+      barColor = purpleSide ? 'purple' : 'blue';
+    } else {
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
+      valColor = val >= 0 ? 'var(--red)' : 'var(--green)';
+      if (primaryField === 'medium_net') barColor = val >= 0 ? 'cyan' : 'green';
+      else barColor = val >= 0 ? 'red' : 'green';
     }
     let pct = Math.abs(val) / maxVal * 100;
     html += '<div class="bar-item">' +
@@ -1284,14 +1355,12 @@ function renderChart(stocks, type, color, primaryField) {
 }
 
 function renderTable(stocks, primaryField) {
-  primaryField = primaryField || 'retail_net';
-  const isMediumTab = primaryField === 'medium_net';
-  const netLabel = isMediumTab ? '中单净额' : '散户净额';
   const cols = [
     {key: 'code', label: '代码'},
     {key: 'name', label: '名称'},
-    {key: primaryField, label: netLabel, isNet: true},
-    {key: 'main_net', label: '主力净额', isNet: true},
+    {key: 'retail_net', label: '散户净额'},
+    {key: 'medium_net', label: '中单净额'},
+    {key: 'main_net', label: '主力净额'},
     {key: 'dynamic_ratio', label: '动态占比'},
     {key: 'price', label: '价格'},
     {key: 'change_pct', label: '涨跌'},
@@ -1304,27 +1373,20 @@ function renderTable(stocks, primaryField) {
     return '<th class="' + cls + '" onclick="sortTable(\'' + c.key + '\')">' + c.label + '<span class="sort-icon"></span></th>';
   }).join('') + '</tr>';
 
-  let displayStocks = stocks;
-  if (searchText) {
-    const q = searchText.toLowerCase();
-    displayStocks = stocks.filter(s =>
-      (s.code||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q)
-    );
-  }
-
   let bodyHtml = '';
-  for (const s of displayStocks) {
+  for (const s of stocks) {
     const cls = s.change_pct > 0 ? 'price-up' : s.change_pct < 0 ? 'price-down' : '';
     const dr = s.dynamic_ratio || 0;
     const drColor = dr > 0 ? 'var(--purple)' : 'var(--blue)';
     const drBarWidth = Math.min(Math.abs(dr), 100);
     const drBarColor = dr > 0 ? 'var(--purple)' : 'var(--blue)';
-    const primaryNet = s[primaryField] || 0;
+    const r = s.retail_net || 0, m = s.medium_net || 0, mn = s.main_net || 0;
     bodyHtml += '<tr>' +
       '<td class="code-cell">' + s.code + '</td>' +
       '<td class="name-cell">' + s.name + '</td>' +
-      '<td style="color:' + (primaryNet >= 0 ? 'var(--red)' : 'var(--green)') + ';font-weight:600">' + (primaryNet >= 0 ? '+' : '') + primaryNet.toFixed(2) + '</td>' +
-      '<td style="color:' + ((s.main_net||0) >= 0 ? 'var(--red)' : 'var(--green)') + '">' + ((s.main_net||0) >= 0 ? '+' : '') + (s.main_net||0).toFixed(2) + '</td>' +
+      '<td style="color:' + (r >= 0 ? 'var(--red)' : 'var(--green)') + ';font-weight:600">' + (r >= 0 ? '+' : '') + r.toFixed(2) + '</td>' +
+      '<td style="color:' + (m >= 0 ? 'var(--red)' : 'var(--green)') + ';font-weight:600">' + (m >= 0 ? '+' : '') + m.toFixed(2) + '</td>' +
+      '<td style="color:' + (mn >= 0 ? 'var(--red)' : 'var(--green)') + '">' + (mn >= 0 ? '+' : '') + mn.toFixed(2) + '</td>' +
       '<td><div class="ratio-cell"><span style="color:' + drColor + ';font-weight:600">' + dr.toFixed(1) + '%</span>' +
         '<span class="mini-bar"><span class="mini-fill" style="width:' + drBarWidth + '%;background:' + drBarColor + '"></span></span></div></td>' +
       '<td>' + (s.price > 0 ? s.price.toFixed(2) : '--') + '</td>' +
@@ -1333,7 +1395,7 @@ function renderTable(stocks, primaryField) {
     '</tr>';
   }
   document.getElementById('tableHead').innerHTML = headHtml;
-  document.getElementById('tableBody').innerHTML = bodyHtml || '<tr><td colspan="8" style="text-align:center;color:var(--dim)">无匹配结果</td></tr>';
+  document.getElementById('tableBody').innerHTML = bodyHtml || '<tr><td colspan="9" style="text-align:center;color:var(--dim)">无匹配结果</td></tr>';
 }
 
 function renderShareholders() {
@@ -1355,13 +1417,7 @@ function renderShareholders() {
 function filterTable() {
   searchText = document.getElementById('searchInput').value.trim();
   if (!allData?.retail_flow) return;
-  const primaryField = (currentTab === 'medium') ? 'medium_net' : 'retail_net';
-  let stocks = [...allData.retail_flow];
-  if (currentSub === 'net' || currentSub === 'medium_net') stocks.sort((a,b) => (b[primaryField]||0) - (a[primaryField]||0)).slice(0, 30);
-  else if (currentSub === 'netout' || currentSub === 'medium_netout') stocks.sort((a,b) => (a[primaryField]||0) - (b[primaryField]||0)).slice(0, 30);
-  else if (currentSub === 'dynamic_dominant') stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0));
-  else if (currentSub === 'main_dominant') stocks = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0));
-  renderTable(stocks.slice(0, 30), primaryField);
+  renderView();
 }
 
 const TAB_SUBTABS = {
@@ -1375,12 +1431,15 @@ const TAB_SUBTABS = {
   ],
   dynamic: [
     {key: 'dynamic_dominant', label: '散户主导TOP'},
+    {key: 'dynamic_bottom', label: '散户垫底'},
     {key: 'main_dominant', label: '主力主导TOP'},
+    {key: 'main_bottom', label: '主力垫底'},
   ],
 };
 
 function switchTab(tab) {
   currentTab = tab;
+  userSorted = false;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
 
@@ -1397,21 +1456,23 @@ function switchTab(tab) {
 
 function switchSub(sub) {
   currentSub = sub;
+  userSorted = false;
   document.querySelectorAll('.subtab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   renderFlow();
 }
 
 function sortTable(col) {
-  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = false; }
-  if (!allData?.retail_flow) return;
-  let stocks = [...allData.retail_flow];
-  stocks.sort((a,b) => {
-    let va = a[col] || 0, vb = b[col] || 0;
-    if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-    return sortAsc ? va - vb : vb - va;
-  });
-  renderTable(stocks.slice(0, 50));
+  if (sortCol === col) {
+    sortAsc = !sortAsc;
+  } else {
+    sortCol = col;
+    // 文本列默认升序，数值列默认降序
+    const isText = (col === 'code' || col === 'name' || col === 'sector');
+    sortAsc = isText;
+  }
+  userSorted = true;
+  renderView();
 }
 
 function getRefreshInterval() {

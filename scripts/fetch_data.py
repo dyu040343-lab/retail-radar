@@ -127,7 +127,7 @@ def fetch_from_eastmoney():
                         "invt": 2,
                         "fid": "f62",
                         "fs": "m:0 t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
-                        "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
+                        "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f100,f124",
                     }
                     data = _fetch_page(session, base_url, params)
                     items = data["data"].get("diff", [])
@@ -211,6 +211,11 @@ def fetch_from_eastmoney():
         total_abs = abs(retail_net) + abs(main_net)
         dynamic_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.001 else 0
 
+        # f100 = 东财行业板块名称（真实行业），为空或 "-" 时退回关键词猜测
+        sector = str(item.get("f100") or "").strip()
+        if not sector or sector == "-":
+            sector = guess_sector(name, code)
+
         stocks.append({
             "code": code,
             "name": name,
@@ -228,7 +233,7 @@ def fetch_from_eastmoney():
             "small_pct": small_pct,
             "total_amount": total_amount,
             "dynamic_ratio": dynamic_ratio,
-            "sector": guess_sector(name, code),
+            "sector": sector,
             "source": "eastmoney",
         })
 
