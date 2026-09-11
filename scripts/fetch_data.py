@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 小散研究院 - 数据抓取脚本 v3
-数据源：akshare（封装东方财富，四档完整：超大单/大单/中单/小单）
-散户 = 小单，主力 = 超大单 + 大单 + 中单
+数据源：东方财富 push2 行情接口（四档资金流：超大单/大单/中单/小单，均为净额）
+散户 = 小单净额，主力 = 超大单 + 大单（东财 f62 口径）
 """
 
 import json
@@ -94,7 +94,7 @@ def _fetch_page(session, base_url, params):
     return data
 
 
-def fetch_from_akshare():
+def fetch_from_eastmoney():
     """东方财富 push2 API - 四档完整数据
     多域名容灾：push2 主站 / push2delay 延迟镜像（主站节点故障时自动切换）
     """
@@ -106,15 +106,17 @@ def fetch_from_akshare():
         "https://push2delay.eastmoney.com",
     ]
 
-    all_stocks = []
     session = requests.Session()
+    best_stocks = []
+    complete = False
 
     for attempt in range(3):
         for base_url in BASE_URLS:
+            all_stocks = []
+            page = 1
+            total_pages = 1
+            expected_total = 0
             try:
-                all_stocks = []
-                page = 1
-                total_pages = 1
                 while page <= total_pages:
                     params = {
                         "pn": page,
@@ -128,30 +130,42 @@ def fetch_from_akshare():
                         "fields": "f12,f14,f2,f3,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f124",
                     }
                     data = _fetch_page(session, base_url, params)
-                    total = data["data"].get("total", 0)
                     items = data["data"].get("diff", [])
+                    if page == 1:
+                        expected_total = data["data"].get("total", 0)
+                        # 不同域名单页上限不同（push2=5000，push2delay=100），按实际返回条数动态分页
+                        if items:
+                            total_pages = (expected_total + len(items) - 1) // len(items)
                     all_stocks.extend(items)
-                    # 不同域名单页上限不同（push2=5000，push2delay=100），按实际返回条数动态分页
-                    if page == 1 and items:
-                        actual_pz = len(items)
-                        total_pages = (total + actual_pz - 1) // actual_pz
                     print(f"  📄 [{base_url.split('//')[1].split('.')[0]}] 第{page}/{total_pages}页: {len(items)} 条")
                     page += 1
                     if not items:
                         break
 
-                if all_stocks:
-                    print(f"  📊 东方财富返回 {len(all_stocks)} 条（via {base_url.split('//')[1]}）")
+                if len(all_stocks) > len(best_stocks):
+                    best_stocks = list(all_stocks)
+
+                # 完整性校验：抓到条数需达到接口 total 的 98%，否则视为分页中途中断
+                if expected_total and len(all_stocks) >= expected_total * 0.98:
+                    print(f"  📊 东方财富返回 {len(all_stocks)}/{expected_total} 条（via {base_url.split('//')[1]}）")
+                    complete = True
                     break
+                print(f"  ⚠️ {base_url} 数据不完整 {len(all_stocks)}/{expected_total} 条，尝试其他节点...")
             except Exception as e:
+                if len(all_stocks) > len(best_stocks):
+                    best_stocks = list(all_stocks)
                 print(f"  ⚠️ {base_url} 第{attempt+1}/3次获取失败: {e}")
-        if all_stocks:
+            time.sleep(2)
+        if complete:
             break
         time.sleep(2)
 
+    all_stocks = best_stocks
     if not all_stocks:
         print("  📦 push2 全部域名不可用，尝试缓存...")
         return []
+    if not complete:
+        print(f"  ⚠️ 未能取得完整全市场数据，使用已抓取最多的 {len(all_stocks)} 条")
 
     # 字段映射: f62=主力净额, f184=主力净占比, f66=超大单净额, f69=超大单净占比,
     #          f72=大单净额, f75=大单净占比, f78=中单净额, f81=中单净占比,
@@ -227,7 +241,7 @@ def fetch_retail_money_flow():
     print("📡 小散研究院 - 数据抓取中...")
     print("=" * 50)
 
-    stocks = fetch_from_akshare()
+    stocks = fetch_from_eastmoney()
     if stocks and len(stocks) > 50:
         print(f"  ✅ 使用东方财富全市场数据（{len(stocks)} 条）")
         return stocks, "live"
