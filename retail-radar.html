@@ -321,7 +321,7 @@ body::after {
 /* ═══ KPI Cards ═══ */
 .kpi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -354,8 +354,6 @@ body::after {
   height: 2px;
 }
 
-.kpi-card.inflow::before { background: linear-gradient(90deg, var(--green), transparent); }
-.kpi-card.outflow::before { background: linear-gradient(90deg, var(--red), transparent); }
 .kpi-card.net::before { background: linear-gradient(90deg, var(--accent), transparent); }
 .kpi-card.dual::before { background: linear-gradient(90deg, var(--purple), var(--cyan), transparent); }
 
@@ -375,8 +373,6 @@ body::after {
   opacity: 0.04;
 }
 
-.kpi-card.inflow::after { background: var(--green); }
-.kpi-card.outflow::after { background: var(--red); }
 .kpi-card.net::after { background: var(--accent); }
 .kpi-card.dual::after { background: var(--purple); }
 
@@ -405,9 +401,8 @@ body::after {
   letter-spacing: -0.5px;
 }
 
-.kpi-card.inflow .kpi-value { color: var(--green); }
-.kpi-card.outflow .kpi-value { color: var(--red); }
 .kpi-card.net .kpi-value { color: var(--accent); }
+.kpi-card.dual .kpi-value { color: var(--purple); }
 .kpi-card.ratio .kpi-value { color: var(--purple); }
 
 .kpi-sub {
@@ -975,34 +970,26 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   <!-- ═══════ Realtime Section ═══════ -->
   <div class="section-header">
     <h2>散户资金实时监控</h2>
-    <span class="freq-tag realtime"><span class="freq-tag-dot"></span>实时 · akshare四档资金流</span>
+    <span class="freq-tag realtime"><span class="freq-tag-dot"></span>实时 · 东方财富四档资金流</span>
   </div>
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
-    <div class="kpi-card inflow">
-      <div class="kpi-label">
-        <span>散户流入资金</span>
-        <span class="kpi-label-tag" style="color:var(--green)">LIVE</span>
-      </div>
-      <div class="kpi-value" id="kpiInflowAmount">--</div>
-      <div class="kpi-sub">流入个股 <span class="num" id="kpiInflowCount">--</span> 只</div>
-    </div>
-    <div class="kpi-card outflow">
-      <div class="kpi-label">
-        <span>散户流出资金</span>
-        <span class="kpi-label-tag" style="color:var(--red)">LIVE</span>
-      </div>
-      <div class="kpi-value" id="kpiOutflowAmount">--</div>
-      <div class="kpi-sub">流出个股 <span class="num" id="kpiOutflowCount">--</span> 只</div>
-    </div>
     <div class="kpi-card net">
       <div class="kpi-label">
-        <span>散户净流入</span>
+        <span>散户净额</span>
         <span class="kpi-label-tag" style="color:var(--accent)">LIVE</span>
       </div>
       <div class="kpi-value" id="kpiNetAmount">--</div>
-      <div class="kpi-sub">共 <span class="num" id="kpiTotal">--</span> 只股票</div>
+      <div class="kpi-sub">净流入 <span class="num" id="kpiInflowCount">--</span> 只 · 净流出 <span class="num" id="kpiOutflowCount">--</span> 只</div>
+    </div>
+    <div class="kpi-card dual">
+      <div class="kpi-label">
+        <span>主力净额</span>
+        <span class="kpi-label-tag" style="color:var(--purple)">LIVE</span>
+      </div>
+      <div class="kpi-value" id="kpiMainAmount">--</div>
+      <div class="kpi-sub">超大单+大单 · 共 <span class="num" id="kpiTotal">--</span> 只股票</div>
     </div>
     <div class="kpi-card ratio">
       <div class="kpi-label">
@@ -1025,9 +1012,8 @@ td.code-cell { color: var(--dim); font-size: 10px; }
 
   <!-- Sub Tabs -->
   <div class="subtab-bar" id="subtabBar">
-    <div class="subtab active" onclick="switchSub('inflow')">流入TOP</div>
-    <div class="subtab" onclick="switchSub('outflow')">流出TOP</div>
-    <div class="subtab" onclick="switchSub('net')">净流入TOP</div>
+    <div class="subtab active" onclick="switchSub('net')">净流入TOP</div>
+    <div class="subtab" onclick="switchSub('netout')">净流出TOP</div>
   </div>
 
   <!-- Search -->
@@ -1038,7 +1024,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   <!-- Content -->
   <div class="content">
     <div class="chart-box">
-      <h3 id="chartTitle">散户流入TOP</h3>
+      <h3 id="chartTitle">散户净流入 TOP30</h3>
       <div id="chartArea">
         <div class="skeleton skeleton-bar" style="width:80%"></div>
         <div class="skeleton skeleton-bar" style="width:60%"></div>
@@ -1088,7 +1074,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
   <footer class="compliance-footer">
     <div class="footer-disclaimer">
       <strong>风险提示与免责声明</strong>
-      <p>本站数据来源于akshare（封装东方财富数据）、东方财富数据中心等公开渠道，仅供参考，不构成任何投资建议。投资者应独立判断投资决策，自行承担投资风险。本站不对任何因使用本站数据而导致的损失承担责任。</p>
+      <p>本站数据来源于东方财富公开行情接口、东方财富数据中心等公开渠道，仅供参考，不构成任何投资建议。投资者应独立判断投资决策，自行承担投资风险。本站不对任何因使用本站数据而导致的损失承担责任。</p>
     </div>
     <div class="footer-links">
       <a href="about.html">关于我们</a>
@@ -1113,7 +1099,7 @@ td.code-cell { color: var(--dim); font-size: 10px; }
 <script>
 let allData = null;
 let currentTab = 'flow';
-let currentSub = 'inflow';
+let currentSub = 'net';
 let autoTimer = null;
 let sortCol = null, sortAsc = false;
 let searchText = '';
@@ -1144,12 +1130,14 @@ function render() {
   document.getElementById('statusText').textContent = status.text;
   document.getElementById('updateTime').textContent = allData.last_updated || '--:--';
 
-  document.getElementById('kpiInflowAmount').textContent = (ov.inflow_amount||0).toFixed(2) + '亿';
-  document.getElementById('kpiInflowCount').textContent = ov.inflow_count || 0;
-  document.getElementById('kpiOutflowAmount').textContent = (ov.outflow_amount||0).toFixed(2) + '亿';
-  document.getElementById('kpiOutflowCount').textContent = ov.outflow_count || 0;
   const net = ov.net_amount || 0;
   document.getElementById('kpiNetAmount').textContent = (net >= 0 ? '+' : '') + net.toFixed(2) + '亿';
+  document.getElementById('kpiInflowCount').textContent = ov.inflow_count || 0;
+  document.getElementById('kpiOutflowCount').textContent = ov.outflow_count || 0;
+  const mainAmt = ov.main_amount || 0;
+  const kpiMainEl = document.getElementById('kpiMainAmount');
+  kpiMainEl.textContent = (mainAmt >= 0 ? '+' : '') + mainAmt.toFixed(2) + '亿';
+  kpiMainEl.style.color = mainAmt >= 0 ? 'var(--red)' : 'var(--green)';
   document.getElementById('kpiTotal').textContent = ov.total_stocks || 0;
 
   const dr = ov.dynamic_ratio || 0;
@@ -1167,15 +1155,12 @@ function renderFlow() {
   let stocks = [...allData.retail_flow];
   let sorted, title, color;
 
-  if (currentSub === 'inflow') {
-    sorted = stocks.sort((a,b) => (b.retail_inflow||0) - (a.retail_inflow||0)).slice(0, 30);
-    title = '散户流入资金 TOP30'; color = 'green';
-  } else if (currentSub === 'outflow') {
-    sorted = stocks.sort((a,b) => (b.retail_outflow||0) - (a.retail_outflow||0)).slice(0, 30);
-    title = '散户流出资金 TOP30'; color = 'red';
-  } else if (currentSub === 'net') {
+  if (currentSub === 'net') {
     sorted = stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
     title = '散户净流入 TOP30'; color = 'accent';
+  } else if (currentSub === 'netout') {
+    sorted = stocks.sort((a,b) => (a.retail_net||0) - (b.retail_net||0)).slice(0, 30);
+    title = '散户净流出 TOP30'; color = 'accent';
   } else if (currentSub === 'dynamic_dominant') {
     sorted = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)).slice(0, 30);
     title = '散户动态主导 TOP（净额方向占比）'; color = 'purple';
@@ -1195,20 +1180,14 @@ function renderChart(stocks, type, color) {
     return;
   }
   const maxVal = Math.max(...stocks.map(s => {
-    if (type === 'inflow') return Math.abs(s.retail_inflow || 0);
-    if (type === 'outflow') return Math.abs(s.retail_outflow || 0);
-    if (type === 'net') return Math.abs(s.retail_net || 0);
+    if (type === 'net' || type === 'netout') return Math.abs(s.retail_net || 0);
     if (type === 'static_high' || type === 'static_low') return 0;
     return Math.abs(s.dynamic_ratio || 0);
   }), 0.01);
   let html = '';
   for (const s of stocks.slice(0, 30)) {
     let val, displayVal, valColor, barColor;
-    if (type === 'inflow') {
-      val = s.retail_inflow || 0; displayVal = val.toFixed(2) + '亿'; valColor = 'var(--green)'; barColor = 'green';
-    } else if (type === 'outflow') {
-      val = s.retail_outflow || 0; displayVal = val.toFixed(2) + '亿'; valColor = 'var(--red)'; barColor = 'red';
-    } else if (type === 'net') {
+    if (type === 'net' || type === 'netout') {
       val = s.retail_net || 0; displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
       valColor = val >= 0 ? 'var(--green)' : 'var(--red)'; barColor = val >= 0 ? 'green' : 'red';
     } else if (type === 'ratio_dominant' || type === 'dynamic_dominant') {
@@ -1294,9 +1273,8 @@ function filterTable() {
   searchText = document.getElementById('searchInput').value.trim();
   if (!allData?.retail_flow) return;
   let stocks = [...allData.retail_flow];
-  if (currentSub === 'inflow') stocks.sort((a,b) => (b.retail_inflow||0) - (a.retail_inflow||0)).slice(0, 30);
-  else if (currentSub === 'outflow') stocks.sort((a,b) => (b.retail_outflow||0) - (a.retail_outflow||0)).slice(0, 30);
-  else if (currentSub === 'net') stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
+  if (currentSub === 'net') stocks.sort((a,b) => (b.retail_net||0) - (a.retail_net||0)).slice(0, 30);
+  else if (currentSub === 'netout') stocks.sort((a,b) => (a.retail_net||0) - (b.retail_net||0)).slice(0, 30);
   else if (currentSub === 'dynamic_dominant') stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0));
   else if (currentSub === 'main_dominant') stocks = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0));
   renderTable(stocks.slice(0, 30));
@@ -1304,9 +1282,8 @@ function filterTable() {
 
 const TAB_SUBTABS = {
   flow: [
-    {key: 'inflow', label: '流入TOP'},
-    {key: 'outflow', label: '流出TOP'},
     {key: 'net', label: '净流入TOP'},
+    {key: 'netout', label: '净流出TOP'},
   ],
   dynamic: [
     {key: 'dynamic_dominant', label: '散户主导TOP'},
@@ -1326,7 +1303,7 @@ function switchTab(tab) {
   });
   document.getElementById('subtabBar').innerHTML = subHtml;
 
-  currentSub = subs.length > 0 ? subs[0].key : 'inflow';
+  currentSub = subs.length > 0 ? subs[0].key : 'net';
   renderFlow();
 }
 

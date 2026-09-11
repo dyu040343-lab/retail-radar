@@ -187,9 +187,6 @@ def fetch_from_akshare():
         # 主力净额直接用东财官方 f62（=超大单+大单），与东财页面口径一致
         main_net = round(to_float(item.get("f62")) / yi, 4)
 
-        retail_inflow = max(retail_net, 0)
-        retail_outflow = max(-retail_net, 0)
-
         if small_pct != 0:
             total_amount = round(retail_net / (small_pct / 100), 2)
         elif super_pct != 0:
@@ -205,8 +202,6 @@ def fetch_from_akshare():
             "name": name,
             "price": round(price, 2) if price else 0,
             "change_pct": round(change_pct, 2) if change_pct else 0,
-            "retail_inflow": round(retail_inflow, 4),
-            "retail_outflow": round(retail_outflow, 4),
             "retail_net": round(retail_net, 4),
             "main_net": round(main_net, 4),
             "super_net": super_net_yi,
@@ -301,15 +296,13 @@ def get_fallback_data():
         large_n = round(net * 0.25, 4)
         medium_n = round(net * 0.15, 4)
         small_n = round(net, 4)
-        main_n = round(super_n + large_n + medium_n, 4)
+        main_n = round(super_n + large_n, 4)
         total_abs = abs(small_n) + abs(main_n)
         dyn = round(small_n / total_abs * 100, 1) if total_abs > 0.001 else 0
         total_amt = round(abs(net) * 10, 2)
         stocks.append({
             "code": code, "name": name,
             "price": 0, "change_pct": 0,
-            "retail_inflow": max(small_n, 0),
-            "retail_outflow": max(-small_n, 0),
             "retail_net": small_n,
             "main_net": main_n,
             "super_net": super_n,
@@ -430,16 +423,16 @@ def calc_overview(stocks):
     total_large = round(sum(s.get("large_net", 0) for s in stocks), 4)
     total_medium = round(sum(s.get("medium_net", 0) for s in stocks), 4)
     total_small = round(sum(s.get("small_net", 0) for s in stocks), 4)
+    total_main = round(sum(s.get("main_net", 0) for s in stocks), 4)
 
     return {
-        "inflow_amount": round(sum(s.get("retail_inflow", 0) for s in stocks), 2),
         "inflow_count": len(inflow_stocks),
-        "outflow_amount": round(sum(s.get("retail_outflow", 0) for s in stocks), 2),
         "outflow_count": len(outflow_stocks),
         "net_amount": round(sum(s.get("retail_net", 0) for s in stocks), 2),
         "net_count": len(inflow_stocks),
         "total_stocks": len(stocks),
         "dynamic_ratio": dynamic_ratio,
+        "main_amount": total_main,
         "super_total": total_super,
         "large_total": total_large,
         "medium_total": total_medium,
@@ -478,7 +471,7 @@ def main():
     print(f"\n✅ 数据保存成功: {output_path}")
     print(f"🕐 更新时间: {output['last_updated']}")
     print(f"📊 散户资金: {len(retail_flow)} 条 [{status_labels.get(data_status, data_status)}]")
-    print(f"💰 流入: {overview['inflow_amount']}亿 ({overview['inflow_count']}只) | 流出: {overview['outflow_amount']}亿 ({overview['outflow_count']}只) | 净流入: {overview['net_amount']}亿 ({overview['net_count']}只)")
+    print(f"💰 散户净额: {overview['net_amount']}亿 | 主力净额: {overview['main_amount']}亿 | 净流入{overview['inflow_count']}只 / 净流出{overview['outflow_count']}只")
     print(f"📈 四档: 超大单{overview['super_total']}亿 | 大单{overview['large_total']}亿 | 中单{overview['medium_total']}亿 | 小单{overview['small_total']}亿")
     print(f"👥 股东户数: {len(shareholder_count)} 条")
     print("=" * 50)
