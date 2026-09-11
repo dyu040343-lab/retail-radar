@@ -1241,8 +1241,8 @@ function render() {
 function PRIMARY_FIELD() { return (currentTab === 'medium') ? 'medium_net' : 'retail_net'; }
 function TAB_NAME() { return (currentTab === 'medium') ? '中单' : '散户'; }
 // dynamic tab 子 subtab：散户/主力双视角，按净额渲染，不用占比
-function IS_RETAIL_SIDE() { return currentSub === 'retail_inflow' || currentSub === 'retail_outflow' || currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom'; }
-function IS_MAIN_SIDE() { return currentSub === 'main_inflow' || currentSub === 'main_outflow' || currentSub === 'main_dominant' || currentSub === 'main_bottom'; }
+function IS_RETAIL_SIDE() { return currentSub === 'retail_ratio_top' || currentSub === 'retail_ratio_bottom'; }
+function IS_MAIN_SIDE() { return currentSub === 'main_ratio_top' || currentSub === 'main_ratio_bottom'; }
 function CHART_METRIC() { return IS_RETAIL_SIDE() ? 'retail_net' : IS_MAIN_SIDE() ? 'main_net' : PRIMARY_FIELD(); }
 
 function getBaseList() {
@@ -1253,22 +1253,24 @@ function getBaseList() {
       stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) > 0); break;
     case 'netout': case 'medium_netout':
       stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) < 0); break;
-    case 'dynamic_dominant':
-      stocks = stocks.filter(s => (s.retail_net||0) > 0); break;  // 兼容旧 key
-    case 'dynamic_bottom':
-      stocks = stocks.filter(s => (s.retail_net||0) < 0); break;  // 兼容旧 key
-    case 'main_dominant':
-      stocks = stocks.filter(s => (s.retail_net||0) < 0); break;  // 兼容旧 key
-    case 'main_bottom':
-      stocks = stocks.filter(s => (s.retail_net||0) > 0); break;  // 兼容旧 key
-    case 'retail_inflow':
-      stocks = stocks.filter(s => (s.retail_net||0) > 0); break;  // 散户净流入（金额降序）
-    case 'retail_outflow':
-      stocks = stocks.filter(s => (s.retail_net||0) < 0); break;  // 散户净流出（金额升序）
-    case 'main_inflow':
-      stocks = stocks.filter(s => (s.main_net||0) > 0); break;    // 主力净流入（金额降序）
-    case 'main_outflow':
-      stocks = stocks.filter(s => (s.main_net||0) < 0); break;    // 主力净流出（金额升序）
+    // dynamic tab 4 个 subtab（占比维度）：散户/主力净额有买，附加 _ratio 字段
+    case 'retail_ratio_top':
+    case 'retail_ratio_bottom':
+      stocks = stocks.filter(s => (s.retail_net||0) > 0);
+      stocks.forEach(s => s._ratio = s.dynamic_ratio || 0);  // 散户净额/总成交
+      break;
+    case 'main_ratio_top':
+    case 'main_ratio_bottom':
+      stocks = stocks.filter(s => (s.main_net||0) > 0);
+      stocks.forEach(s => {
+        const amt = s.total_amount || 0;
+        s._ratio = amt > 0.01 ? (s.main_net || 0) / amt * 100 : 0;  // 主力净额/总成交
+      });
+      break;
+  }
+  // dynamic tab 全局：流动性过滤（剔除成交额<5亿的票，避免"不交易比谁更夸张"）
+  if (currentTab === 'dynamic') {
+    stocks = stocks.filter(s => (s.total_amount || 0) >= 5);
   }
   return stocks;
 }
@@ -1278,14 +1280,11 @@ function applyDefaultSort() {
   const map = {
     'net': [pf, false], 'medium_net': [pf, false],
     'netout': [pf, true], 'medium_netout': [pf, true],
-    'dynamic_dominant': ['retail_net', false],  // 兼容旧 key
-    'dynamic_bottom': ['retail_net', true],    // 兼容旧 key
-    'main_dominant': ['main_net', false],      // 兼容旧 key
-    'main_bottom': ['main_net', true],         // 兼容旧 key
-    'retail_inflow': ['retail_net', false],    // 散户净流入降序（最大买入）
-    'retail_outflow': ['retail_net', true],    // 散户净流出升序（最大卖出/最负）
-    'main_inflow': ['main_net', false],        // 主力净流入降序（最大买入）
-    'main_outflow': ['main_net', true],        // 主力净流出升序（最大卖出/最负）
+    // 占比维度：TOP 降序（最大正值），BOTTOM 升序（最小正值/接近0）
+    'retail_ratio_top': ['_ratio', false],
+    'retail_ratio_bottom': ['_ratio', true],
+    'main_ratio_top': ['_ratio', false],
+    'main_ratio_bottom': ['_ratio', true],
   };
   const d = map[currentSub] || [pf, false];
   sortCol = d[0]; sortAsc = d[1]; userSorted = false;
@@ -1296,14 +1295,10 @@ function chartTitleFor() {
   switch (currentSub) {
     case 'net': case 'medium_net': return n + '净流入 TOP30';
     case 'netout': case 'medium_netout': return n + '净流出 TOP30';
-    case 'dynamic_dominant': return '散户净流入 TOP30';
-    case 'dynamic_bottom': return '散户净流出 TOP30';
-    case 'main_dominant': return '主力净流入 TOP30';
-    case 'main_bottom': return '主力净流出 TOP30';
-    case 'retail_inflow': return '散户净流入 TOP30';
-    case 'retail_outflow': return '散户净流出 TOP30';
-    case 'main_inflow': return '主力净流入 TOP30';
-    case 'main_outflow': return '主力净流出 TOP30';
+    case 'retail_ratio_top': return '散户占比TOP30（散户净额>0，占比最大正值，剔除成交<5亿）';
+    case 'retail_ratio_bottom': return '散户占比BOTTOM30（散户净额>0，占比最小/接近0）';
+    case 'main_ratio_top': return '主力占比TOP30（主力净额>0，占比最大正值）';
+    case 'main_ratio_bottom': return '主力占比BOTTOM30（主力净额>0，占比最小/接近0）';
   }
   return 'TOP30';
 }
@@ -1346,30 +1341,43 @@ function renderChart(stocks, primaryField) {
     document.getElementById('chartArea').innerHTML = '<div style="color:var(--dim);text-align:center;padding:40px;">暂无数据</div>';
     return;
   }
-  // 散户/中单 tab → PRIMARY_FIELD 金额（红涨绿跌）；dynamic tab → 散户视角retail_net/主力视角main_net（散户红主力蓝）
   const isRetailSide = IS_RETAIL_SIDE();
   const isMainSide = IS_MAIN_SIDE();
-  const metric = isRetailSide ? 'retail_net' : isMainSide ? 'main_net' : primaryField;
-  const maxVal = Math.max(...stocks.map(s => Math.abs(s[metric] || 0)), 0.01);
+  let metric, maxVal;
+  if (currentTab === 'dynamic') {
+    // 占比维度：用 _ratio（百分比），maxVal=100
+    metric = '_ratio';
+    maxVal = 100;
+  } else {
+    metric = isRetailSide ? 'retail_net' : isMainSide ? 'main_net' : primaryField;
+    maxVal = Math.max(...stocks.map(s => Math.abs(s[metric] || 0)), 0.01);
+  }
   let html = '';
   for (const s of stocks) {
     const val = s[metric] || 0;
     let displayVal, valColor, barColor;
-    displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
-    if (isMainSide) {
+    if (currentTab === 'dynamic') {
+      // 占比用百分比 + 紫色（散户视角）/蓝色（主力视角）
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+      valColor = isRetailSide ? 'var(--purple)' : 'var(--blue)';
+      barColor = isRetailSide ? 'purple' : 'blue';
+    } else if (isMainSide) {
       // 主力视角：蓝涨绿跌（区分散户视角）
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
       valColor = val >= 0 ? 'var(--blue)' : 'var(--green)';
       barColor = val >= 0 ? 'blue' : 'green';
     } else if (primaryField === 'medium_net') {
       // 中单 tab：cyan 红涨绿跌
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
       valColor = val >= 0 ? 'var(--red)' : 'var(--green)';
       barColor = val >= 0 ? 'cyan' : 'green';
     } else {
-      // 散户 tab + 散户视角（dynamic 红涨绿跌）
+      // 散户 tab 红涨绿跌
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
       valColor = val >= 0 ? 'var(--red)' : 'var(--green)';
       barColor = val >= 0 ? 'red' : 'green';
     }
-    const pct = Math.abs(val) / maxVal * 100;
+    const pct = currentTab === 'dynamic' ? Math.min(Math.abs(val), 100) : (Math.abs(val) / maxVal * 100);
     html += '<div class="bar-item">' +
       '<div class="bar-info"><span class="bar-name">' + s.name + '</span><span class="bar-value" style="color:' + valColor + '">' + displayVal + '</span></div>' +
       '<div class="bar-track"><div class="bar-fill ' + barColor + '" style="width:' + pct + '%"></div></div>' +
@@ -1454,10 +1462,10 @@ const TAB_SUBTABS = {
     {key: 'medium_netout', label: '净流出TOP'},
   ],
   dynamic: [
-    {key: 'retail_inflow', label: '散户净流入TOP'},
-    {key: 'retail_outflow', label: '散户净流出TOP'},
-    {key: 'main_inflow', label: '主力净流入TOP'},
-    {key: 'main_outflow', label: '主力净流出TOP'},
+    {key: 'retail_ratio_top', label: '散户占比TOP'},
+    {key: 'retail_ratio_bottom', label: '散户占比BOTTOM'},
+    {key: 'main_ratio_top', label: '主力占比TOP'},
+    {key: 'main_ratio_bottom', label: '主力占比BOTTOM'},
   ],
 };
 
