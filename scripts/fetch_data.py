@@ -208,8 +208,12 @@ def fetch_from_eastmoney():
         else:
             total_amount = 0
 
-        total_abs = abs(retail_net) + abs(main_net)
-        dynamic_ratio = round(retail_net / total_abs * 100, 1) if total_abs > 0.001 else 0
+        # 动态占比：散户净额 / 个股总成交额（亿元）×100，保留正负号
+        # 含义：散户净额在这只票当日总成交中的占比（>0 散户净买入主导，<0 散户净卖出主力主导）
+        if total_amount > 0:
+            dynamic_ratio = round(retail_net / total_amount * 100, 2)
+        else:
+            dynamic_ratio = 0
 
         # f100 = 东财行业板块名称（真实行业），为空或 "-" 时退回关键词猜测
         sector = str(item.get("f100") or "").strip()

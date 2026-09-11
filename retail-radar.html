@@ -1240,24 +1240,24 @@ function render() {
 
 function PRIMARY_FIELD() { return (currentTab === 'medium') ? 'medium_net' : 'retail_net'; }
 function TAB_NAME() { return (currentTab === 'medium') ? '中单' : '散户'; }
-function IS_RATIO_SUB() { return currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom' || currentSub === 'main_dominant' || currentSub === 'main_bottom'; }
+function IS_DYNAMIC_SUB() { return currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom' || currentSub === 'main_dominant' || currentSub === 'main_bottom'; }
 
 function getBaseList() {
+  // 只做 filter，排序交给 renderView（用 sortCol/sortAsc 统一）
   let stocks = [...(allData?.retail_flow || [])];
-  const pf = PRIMARY_FIELD();
   switch (currentSub) {
     case 'net': case 'medium_net':
-      stocks.sort((a,b) => (b[pf]||0) - (a[pf]||0)); break;
+      stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) > 0); break;
     case 'netout': case 'medium_netout':
-      stocks.sort((a,b) => (a[pf]||0) - (b[pf]||0)); break;
+      stocks = stocks.filter(s => (s[PRIMARY_FIELD()]||0) < 0); break;
     case 'dynamic_dominant':
-      stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)); break;
+      stocks = stocks.filter(s => (s.retail_net||0) > 0); break;  // 散户净流入最强 → 占比最大正值
     case 'dynamic_bottom':
-      stocks = stocks.filter(s => s.dynamic_ratio > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)); break;
+      stocks = stocks.filter(s => (s.retail_net||0) < 0); break;  // 散户净流出最强 → 占比最小负值
     case 'main_dominant':
-      stocks = stocks.filter(s => s.dynamic_ratio < 0 || (s.main_net||0) > 0).sort((a,b) => (a.dynamic_ratio||0) - (b.dynamic_ratio||0)); break;
+      stocks = stocks.filter(s => (s.retail_net||0) < 0); break;  // 主力净流入最强 = 散户净卖出最强
     case 'main_bottom':
-      stocks = stocks.filter(s => s.dynamic_ratio < 0).sort((a,b) => (b.dynamic_ratio||0) - (a.dynamic_ratio||0)); break;
+      stocks = stocks.filter(s => (s.retail_net||0) > 0); break;  // 主力净流出最强 = 散户净买入最强
   }
   return stocks;
 }
@@ -1267,10 +1267,10 @@ function applyDefaultSort() {
   const map = {
     'net': [pf, false], 'medium_net': [pf, false],
     'netout': [pf, true], 'medium_netout': [pf, true],
-    'dynamic_dominant': ['dynamic_ratio', false],
-    'dynamic_bottom': ['dynamic_ratio', true],
-    'main_dominant': ['dynamic_ratio', true],
-    'main_bottom': ['dynamic_ratio', false],
+    'dynamic_dominant': ['dynamic_ratio', false],  // 占比降序（最高在前）
+    'dynamic_bottom': ['dynamic_ratio', true],    // 占比升序（最低在前）
+    'main_dominant': ['dynamic_ratio', true],     // 占比升序（最负在前 → 主力主导最强）
+    'main_bottom': ['dynamic_ratio', false],      // 占比降序（最接近0在前 → 主力主导最弱）
   };
   const d = map[currentSub] || [pf, false];
   sortCol = d[0]; sortAsc = d[1]; userSorted = false;
@@ -1281,10 +1281,10 @@ function chartTitleFor() {
   switch (currentSub) {
     case 'net': case 'medium_net': return n + '净流入 TOP30';
     case 'netout': case 'medium_netout': return n + '净流出 TOP30';
-    case 'dynamic_dominant': return '散户主导 TOP30（散户净额方向占比）';
-    case 'dynamic_bottom': return '散户垫底30（散户为正但主导最弱）';
-    case 'main_dominant': return '主力主导 TOP30（主力净额方向占比）';
-    case 'main_bottom': return '主力垫底30（主力为负但主导最弱）';
+    case 'dynamic_dominant': return '散户净流入 TOP30（散户净额>0，占比最高）';
+    case 'dynamic_bottom': return '散户净流出 TOP30（散户净额<0，占比最低/最负）';
+    case 'main_dominant': return '主力净流入 TOP30（散户净额<0，占比最低/主力主导最强）';
+    case 'main_bottom': return '主力净流出 TOP30（散户净额>0，占比最高/主力主导最弱）';
   }
   return 'TOP30';
 }
@@ -1327,25 +1327,27 @@ function renderChart(stocks, primaryField) {
     document.getElementById('chartArea').innerHTML = '<div style="color:var(--dim);text-align:center;padding:40px;">暂无数据</div>';
     return;
   }
-  const isRatio = IS_RATIO_SUB();
-  const metric = isRatio ? 'dynamic_ratio' : primaryField;
-  const maxVal = Math.max(...stocks.map(s => Math.abs(s[metric] || 0)), 0.01);
+  // 散户/中单 tab → 主净额金额（红涨绿跌）；dynamic tab → 动态占比（百分比）
+  const isDynamic = IS_DYNAMIC_SUB();
+  const metric = isDynamic ? 'dynamic_ratio' : primaryField;
+  const maxVal = isDynamic ? 100 : Math.max(...stocks.map(s => Math.abs(s[metric] || 0)), 0.01);
   let html = '';
   for (const s of stocks) {
     const val = s[metric] || 0;
     let displayVal, valColor, barColor;
-    if (isRatio) {
-      displayVal = (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
-      const purpleSide = currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom';
-      valColor = purpleSide ? 'var(--purple)' : 'var(--blue)';
-      barColor = purpleSide ? 'purple' : 'blue';
+    if (isDynamic) {
+      // 占比用百分比 + purple/blue 配色（散户视角紫、主力视角蓝）
+      displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+      const isRetailSide = currentSub === 'dynamic_dominant' || currentSub === 'dynamic_bottom';
+      valColor = isRetailSide ? 'var(--purple)' : 'var(--blue)';
+      barColor = isRetailSide ? 'purple' : 'blue';
     } else {
       displayVal = (val >= 0 ? '+' : '') + val.toFixed(2) + '亿';
       valColor = val >= 0 ? 'var(--red)' : 'var(--green)';
       if (primaryField === 'medium_net') barColor = val >= 0 ? 'cyan' : 'green';
       else barColor = val >= 0 ? 'red' : 'green';
     }
-    let pct = Math.abs(val) / maxVal * 100;
+    const pct = isDynamic ? Math.min(Math.abs(val), 100) : (Math.abs(val) / maxVal * 100);
     html += '<div class="bar-item">' +
       '<div class="bar-info"><span class="bar-name">' + s.name + '</span><span class="bar-value" style="color:' + valColor + '">' + displayVal + '</span></div>' +
       '<div class="bar-track"><div class="bar-fill ' + barColor + '" style="width:' + pct + '%"></div></div>' +
