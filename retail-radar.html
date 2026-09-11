@@ -1070,7 +1070,6 @@ td.code-cell { color: var(--dim); font-size: 10px; }
         <div class="tier-legend-item"><span class="tier-legend-dot medium"></span><span class="tier-legend-val" id="legendMedium">--</span><span class="tier-legend-label">%</span></div>
         <div class="tier-legend-item"><span class="tier-legend-dot main"></span><span class="tier-legend-val" id="legendMain">--</span><span class="tier-legend-label">%</span></div>
       </div>
-      <div class="kpi-sub">按绝对额加权 · 总和 <span class="num" id="shareTotal">--</span> 亿</div>
     </div>
   </div>
 
@@ -1232,7 +1231,6 @@ function render() {
   document.getElementById('legendRetail').textContent = ts.retail_pct;
   document.getElementById('legendMedium').textContent = ts.medium_pct;
   document.getElementById('legendMain').textContent = ts.main_pct;
-  document.getElementById('shareTotal').textContent = ts.tier_total;
 
   renderFlow();
   renderShareholders();
