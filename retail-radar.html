@@ -1419,7 +1419,8 @@ function renderTable(stocks, primaryField) {
     {key: 'change_pct', label: '涨跌'},
     {key: 'sector', label: '行业'},
   ];
-  const hlKey = primaryField;  // 当前资金视角列高亮
+  // 当前资金视角列高亮（仅资金动向 tab；占比 tab 的 primaryField 恒为 retail_net，不参与高亮）
+  const hlKey = (currentTab === 'flow') ? primaryField : null;
   const ncols = isDynamic ? 9 : 8;
   let headHtml = '<tr>' + cols.map(c => {
     let cls = 'sortable';
